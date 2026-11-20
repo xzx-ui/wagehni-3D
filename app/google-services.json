@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "202999401073",
+    "project_id": "gen-lang-client-0959413060",
+    "storage_bucket": "gen-lang-client-0959413060.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:202999401073:android:8b885f819438172fa729d0",
+        "android_client_info": {
+          "package_name": "com.aistudio.wajehni.tact3d"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDlslnJ6iCbaFodBZ6-XfIpUk_37T9gyFY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

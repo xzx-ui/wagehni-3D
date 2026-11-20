@@ -1,0 +1,19 @@
+<resources>
+    <string name="app_name">وجهني - الملاحة التكتيكية</string>
+    <string name="nav_campus_3d">الحرم 3D</string>
+    <string name="nav_directory">دليل القاعات</string>
+    <string name="nav_walkthrough">الملاحة الداخلية</string>
+    <string name="nav_ai_tactical">المساعد الذكي</string>
+    <string name="nav_insights">دراسة الجدوى</string>
+    <string name="action_drop_and_navigate">هبوط وملاحة</string>
+    <string name="action_share_location">أنا هنا - مشاركة الموقع</string>
+    <string name="action_book_hall">حجز القاعة الآن</string>
+    <string name="radar_title">الرادار والبوصلة التكتيكية الحية</string>
+    <string name="search_hint">ابحث برقم القاعة (مثل 402) أو التخصص (أمن سيبراني، ذكاء اصطناعي)...</string>
+    <string name="aerial_drop_title">الهبوط السينمائي الجوي التكتيكي</string>
+    <string name="target_stability_label">ثبات الهدف الموجه ±0.5m</string>
+    <string name="walk_simulation_start">تشغيل محاكي المشي المستمر</string>
+    <string name="walk_simulation_stop">إيقاف محاكي المشي</string>
+    <string name="ar_mode_toggle">الواقع المعزز بالكاميرا AR</string>
+    <string name="voice_guidance_speak">نطق التوجيه الصوتي</string>
+</resources>

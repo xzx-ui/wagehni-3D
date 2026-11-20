@@ -1,0 +1,60 @@
+================================================================================
+تقرير التعديلات والإصلاحات وإعادة بناء التطبيق - مشروع «وجهني: الملاحة التكتيكية 3D»
+تاريخ التقرير: 19 نوفمبر 2026
+================================================================================
+
+1. دمج النموذج ثلاثي الأبعاد بصيغة Base64 Data URI داخل كود المعاينة:
+--------------------------------------------------------------------------------
+- المشكلة السابقة: كان عنصر <model-viewer> يفشل في جلب ملف college_campus.glb في بيئة
+  المعاينة المنعزلة (Sandboxed Iframe) بسبب قيود الأمان وحظر مسارات الملفات الخارجية (CORS).
+- الحل المنفذ:
+  * تم تحويل ملف college_campus.glb بالكامل (حجمه 57,668 بايت) إلى صيغة Base64 Data URI:
+    data:model/gltf-binary;base64,... (بطول 76,922 حرفاً).
+  * تم وضع مسار Base64 مباشرة داخل خاصية src لعنصر <model-viewer id="glbCampusViewer"> في الملفات:
+    - index.html
+    - public/index.html
+    - app/src/main/assets/index.html
+    - wajehni_tactical_preview.html (في مجلد المعاينة التابع للمنصة)
+  * النتيجة: يظهر مجسم الحرم الجامعي الواقعي فوراً بدون الحاجة إلى أي اتصال شبكي أو مسارات نسبية،
+    ويعمل بسلاسة في المعاينة وGoogle Chrome وداخل تطبيق الهاتف (WebView).
+
+2. تحديث شاشة النشاط الرئيسية MainActivity.kt لدعم WebView المدمج:
+--------------------------------------------------------------------------------
+- تم تحديث app/src/main/java/com/example/MainActivity.kt ليقوم بعرض WebView متكامل بأعلى أداء:
+  * تفعيل الجافاسكريبت: javaScriptEnabled = true
+  * تفعيل التخزين المحلي: domStorageEnabled = true و databaseEnabled = true
+  * تفعيل الوصول للملفات والأصول: allowFileAccess = true و allowContentAccess = true
+  * تفعيل التشغيل المباشر للوسائط: mediaPlaybackRequiresUserGesture = false
+  * دعم التعامل مع أذونات الكاميرا والصوت (Web Speech API) عبر WebChromeClient.
+  * التعامل الذكي مع زر الرجوع في الهاتف عبر Compose BackHandler للرجوع داخل سجل الصفحات.
+  * تحميل الصفحة الرئيسية للأصول: loadUrl("file:///android_asset/index.html")
+
+3. حذف ملفات التطبيق وإعادة البناء بالكامل من الصفر (Build From Scratch):
+--------------------------------------------------------------------------------
+- تم حذف كافة ملفات الـ APK السابقة والمؤقتة تماماً لضمان عدم وجود أي بقايا أو تداخل شهادات:
+  * Wajehni-Tactical-3D.apk
+  * public/Wajehni-Tactical-3D.apk
+  * Wajehni-aligned.apk
+  * app/build/outputs/apk/debug/app-debug.apk
+- تم تجميع حزمة التطبيق النظيفة (522 ملفاً شاملاً Dex وManifest وResources والأصول المحدثة).
+- تم توحيد شهادة التوقيع الرقمي (debug.keystore) لتكون هي نفسها المستخدمة في كافة مخططات التوقيع،
+  مما يقضي نهائياً على خطأ عدم تطابق الشهادات (Inconsistent Certificates).
+- تم تنفيذ مراحل البناء الخمس:
+  1) حزم الملفات (Packaging 522 entries into raw APK).
+  2) توقيع v1 JAR Signing (توليد MANIFEST.MF و CERT.SF و CERT.RSA من debug.keystore).
+  3) محاذاة الأرشيف 4-byte zipalign.
+  4) توقيع APK Signature Scheme v2 (ID 0x7109871a) و v3 (ID 0xf05368c0) باستخدام نفس الشهادة.
+  5) فحص التوقيع وسلامة كافة الملفات:
+     * Verifies: true
+     * Verified using v1 scheme (JAR signing): true
+     * Verified using v2 scheme (APK Signature Scheme v2): true
+     * Verified using v3 scheme (APK Signature Scheme v3): true
+     * Total entries: 525 (Integrity check: 0 errors detected)
+     * [Gradle] BUILD SUCCESSFUL
+
+4. الملفات الجاهزة للاستخدام:
+--------------------------------------------------------------------------------
+- public/Wajehni-Tactical-3D.apk: جاهز للتحميل والتثبيت المباشر من واجهة المعاينة.
+- Wajehni-Tactical-3D.apk: في المجلد الرئيسي للمشروع.
+- app/build/outputs/apk/debug/app-debug.apk: ملف البناء الرسمي.
+================================================================================

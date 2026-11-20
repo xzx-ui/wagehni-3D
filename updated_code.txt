@@ -1,0 +1,1894 @@
+﻿<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>وجهني - الملاحة التكتيكية ثلاثية الأبعاد</title>
+  <script src="https://www.gstatic.com/antigravity/web/dev/tailwindcss.min.js"></script>
+  <script type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/3.4.0/model-viewer.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Tajawal:wght@300;400;500;700;900&family=Share+Tech+Mono&display=swap');
+    
+    * {
+      font-family: 'Tajawal', sans-serif;
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+    
+    .font-mono-tactical {
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    /* Tactical Glows & Gradients */
+    .glow-cyan {
+      box-shadow: 0 0 15px rgba(0, 240, 255, 0.45);
+    }
+    .glow-emerald {
+      box-shadow: 0 0 15px rgba(0, 255, 133, 0.45);
+    }
+    .glow-gold {
+      box-shadow: 0 0 15px rgba(255, 184, 0, 0.45);
+    }
+    .glow-purple {
+      box-shadow: 0 0 15px rgba(168, 85, 247, 0.45);
+    }
+    .text-glow-cyan {
+      text-shadow: 0 0 8px rgba(0, 240, 255, 0.7);
+    }
+    .border-glow-cyan {
+      box-shadow: inset 0 0 10px rgba(0, 240, 255, 0.25), 0 0 10px rgba(0, 240, 255, 0.3);
+    }
+
+    /* Tactical HUD Grid Overlay */
+    .hud-grid {
+      background-image: linear-gradient(rgba(0, 240, 255, 0.05) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(0, 240, 255, 0.05) 1px, transparent 1px);
+      background-size: 24px 24px;
+    }
+
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #0B0F19;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #1E293B;
+      border-radius: 3px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #00F0FF;
+    }
+
+    /* Radar sweep animation */
+    @keyframes radarSweep {
+      from { transform: rotate(0deg); }
+      to { transform: rotate(360deg); }
+    }
+    .radar-sweep-arm {
+      animation: radarSweep 3.2s linear infinite;
+      transform-origin: center;
+    }
+
+    /* Pulse animation */
+    @keyframes pulseRing {
+      0% { transform: scale(0.9); opacity: 0.9; }
+      50% { transform: scale(1.15); opacity: 0.4; }
+      100% { transform: scale(0.9); opacity: 0.9; }
+    }
+    .pulse-tactical {
+      animation: pulseRing 2s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-[#070A12] text-slate-100 min-h-screen flex flex-col select-none overflow-x-hidden">
+
+  <!-- TOP STATUS BAR & HEADER -->
+  <header class="bg-[#0B0F19]/95 backdrop-blur border-b border-cyan-500/20 px-4 py-3 sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Brand & Tactical Badge -->
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500 to-blue-700 flex items-center justify-center glow-cyan border border-cyan-400/50">
+          <i class="fa-solid fa-location-crosshairs text-slate-950 text-xl font-bold"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="font-bold text-lg text-white tracking-wide">وجهني <span class="text-cyan-400 font-mono-tactical text-xs font-semibold px-2 py-0.5 rounded bg-cyan-950/80 border border-cyan-500/40">3D HUD</span></h1>
+            <span class="inline-flex items-center gap-1 text-[11px] font-mono-tactical text-emerald-400 bg-emerald-950/60 px-2 py-0.5 rounded-full border border-emerald-500/30">
+              <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping"></span>
+              ملاحة نشطة
+            </span>
+          </div>
+          <p class="text-xs text-slate-400 hidden sm:block">النظام التكتيكي لإرشاد الحرم الجامعي | المنظور الأول 3D ورادار UWB</p>
+        </div>
+      </div>
+
+      <!-- Quick Telemetry & Actions -->
+      <div class="flex items-center gap-2 sm:gap-3 flex-wrap">
+        
+        <!-- Live Azimuth Compass Chip -->
+        <button onclick="toggleRadarModal()" class="flex items-center gap-2 bg-[#121929] hover:bg-[#1A2338] border border-cyan-500/30 px-3 py-1.5 rounded-lg text-xs transition-all group">
+          <i class="fa-solid fa-compass text-cyan-400 group-hover:rotate-45 transition-transform duration-300"></i>
+          <span class="font-mono-tactical text-cyan-300" id="headerAzimuth">318° NW</span>
+          <span class="text-[10px] text-slate-400 hidden md:inline">| رادار</span>
+        </button>
+
+        <!-- UWB Precision Indicator -->
+        <div class="hidden md:flex items-center gap-1.5 bg-[#121929] border border-emerald-500/30 px-3 py-1.5 rounded-lg text-xs font-mono-tactical text-emerald-400">
+          <i class="fa-solid fa-satellite-dish text-[10px]"></i>
+          <span>UWB ±0.35m</span>
+        </div>
+
+        <!-- Audio Mute / Unmute Toggle -->
+        <button onclick="toggleVoiceMute()" id="muteBtn" class="bg-[#121929] hover:bg-[#1A2338] border border-slate-700 hover:border-cyan-500/50 text-slate-300 hover:text-cyan-300 w-9 h-9 rounded-lg flex items-center justify-center text-sm transition-all" title="كتم / تفعيل الصوت التكتيكي">
+          <i class="fa-solid fa-volume-high"></i>
+        </button>
+
+        <!-- Download APK Button -->
+        <a href="Wajehni-Tactical-3D.apk" download class="bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs flex items-center gap-2 glow-emerald transition-all shadow-lg hover:scale-105 active:scale-95" title="تحميل ملف APK مباشرة لجوال الأندرويد">
+          <i class="fa-brands fa-android text-sm"></i>
+          <span>تحميل APK (27MB)</span>
+        </a>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN VIEWPORT CONTAINER -->
+  <main class="flex-1 max-w-7xl mx-auto w-full p-3 sm:p-4 md:p-6 flex flex-col gap-4">
+    
+    <!-- SYSTEM NOTICE / STATUS BANNER -->
+    <div id="statusBanner" class="bg-gradient-to-r from-cyan-950/60 via-[#0E172A] to-blue-950/60 border border-cyan-500/30 rounded-xl p-3 flex items-center justify-between gap-3 text-xs shadow-md">
+      <div class="flex items-center gap-2.5">
+        <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
+        <span class="text-slate-300" id="bannerMessage">النظام التكتيكي جاهز - حدد قاعة من الدليل أو انقر فوق أي مبنى في المشهد ثلاثي الأبعاد لبدء الهبوط والملاحة.</span>
+      </div>
+      <button onclick="dismissBanner()" class="text-slate-400 hover:text-white px-2 py-1 rounded transition-colors">
+        <i class="fa-solid fa-xmark"></i>
+      </button>
+    </div>
+
+    <!-- TACTICAL SCREENS WRAPPER -->
+    <div class="flex-1 relative min-h-[580px]">
+
+      <!-- ============================================== -->
+      <!-- SCREEN 1: CAMPUS 3D SCENE (الحرم 3D) -->
+      <!-- ============================================== -->
+      <div id="screen-campus3d" class="screen-view h-full flex flex-col gap-4">
+        
+        <!-- Controls Toolbar -->
+        <div class="bg-[#0E1526] border border-slate-800 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-md">
+          
+          <!-- Floor Filter Chips -->
+          <div class="flex items-center gap-1.5 flex-wrap">
+            <span class="text-xs text-slate-400 ml-1 font-semibold flex items-center gap-1">
+              <i class="fa-solid fa-layer-group text-cyan-400"></i>
+              <span>الأدوار:</span>
+            </span>
+            <button onclick="setFloorFilter(null)" class="floor-chip active bg-cyan-500 text-slate-950 font-bold px-2.5 py-1 rounded text-xs transition-all">الكل</button>
+            <button onclick="setFloorFilter(0)" class="floor-chip bg-[#162035] text-slate-300 hover:text-white px-2.5 py-1 rounded text-xs transition-all">الأرضي</button>
+            <button onclick="setFloorFilter(1)" class="floor-chip bg-[#162035] text-slate-300 hover:text-white px-2.5 py-1 rounded text-xs transition-all">الأول</button>
+            <button onclick="setFloorFilter(2)" class="floor-chip bg-[#162035] text-slate-300 hover:text-white px-2.5 py-1 rounded text-xs transition-all">الثاني</button>
+            <button onclick="setFloorFilter(3)" class="floor-chip bg-[#162035] text-slate-300 hover:text-white px-2.5 py-1 rounded text-xs transition-all">الثالث</button>
+            <button onclick="setFloorFilter(4)" class="floor-chip bg-[#162035] text-slate-300 hover:text-white px-2.5 py-1 rounded text-xs transition-all">الرابع</button>
+          </div>
+
+          <!-- Quick Toggles -->
+          <div class="flex items-center gap-2">
+            <button onclick="toggleGlbModelView()" id="glbToggleBtn" class="flex items-center gap-1.5 bg-[#121B30] hover:bg-[#1A2744] text-amber-300 border border-amber-500/40 px-3 py-1 rounded-lg text-xs font-medium transition-all" title="عرض نموذج الحرم الجامعي 3D المرفوع">
+              <i class="fa-solid fa-cube text-[10px]"></i>
+              <span>نموذج GLB الحقيقي</span>
+            </button>
+            <button onclick="toggleIotOverlay()" id="iotToggleBtn" class="flex items-center gap-1.5 bg-[#121B30] hover:bg-[#1A2744] text-cyan-300 border border-cyan-500/40 px-3 py-1 rounded-lg text-xs font-medium transition-all">
+              <i class="fa-solid fa-wifi text-[10px]"></i>
+              <span>مؤشرات IoT</span>
+            </button>
+            <button onclick="toggleWheelchairMode()" id="wheelchairToggleBtn" class="flex items-center gap-1.5 bg-[#121B30] hover:bg-[#1A2744] text-slate-300 border border-slate-700 px-3 py-1 rounded-lg text-xs font-medium transition-all">
+              <i class="fa-solid fa-wheelchair text-[11px]"></i>
+              <span>مسارات الكراسي</span>
+            </button>
+            <button onclick="reset3DCamera()" class="flex items-center gap-1.5 bg-[#121B30] hover:bg-[#1A2744] text-slate-300 border border-slate-700 px-3 py-1 rounded-lg text-xs font-medium transition-all" title="إعادة ضبط زاوية الرؤية">
+              <i class="fa-solid fa-arrows-rotate text-[10px]"></i>
+              <span>إعادة ضبط</span>
+            </button>
+          </div>
+
+        </div>
+
+        <!-- 3D Canvas Area & Info Sidebar Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-4 flex-1">
+          
+          <!-- 3D Viewport Box -->
+          <div class="lg:col-span-3 relative bg-[#090D18] border border-cyan-500/30 rounded-2xl overflow-hidden shadow-2xl flex flex-col min-h-[460px]">
+            <canvas id="campusCanvas" class="w-full h-full cursor-grab active:cursor-grabbing flex-1"></canvas>
+            
+            <!-- Real Uploaded GLB Model Viewer -->
+            <model-viewer id="glbCampusViewer" src="data:model/gltf-binary;base64,Z2xURgIAAABE4QAA1HAAAEpTT057ImFzc2V0Ijp7ImdlbmVyYXRvciI6Iktocm9ub3MgZ2xURiBCbGVuZGVyIEkvTyB2NS4yLjQxIiwidmVyc2lvbiI6IjIuMCJ9LCJzY2VuZSI6MCwic2NlbmVzIjpbeyJuYW1lIjoiU2NlbmUiLCJub2RlcyI6WzAsMSwyLDMsNCw1LDYsNyw4LDksMTAsMTEsMTIsMTMsMTQsMTUsMTYsMTcsMTgsMTksMjAsMjEsMjIsMjMsMjQsMjUsMjYsMjcsMjgsMjksMzAsMzEsMzIsMzMsMzQsMzUsMzYsMzcsMzgsMzksNDAsNDEsNDIsNDMsNDQsNDUsNDYsNDcsNDgsNDksNTAsNTEsNTIsNTMsNTQsNTUsNTYsNTcsNTgsNTksNjAsNjEsNjJdfV0sIm5vZGVzIjpbeyJtZXNoIjowLCJuYW1lIjoiQnVpbGRpbmdfMSIsInNjYWxlIjpbNyw0LjI1LDEwXSwidHJhbnNsYXRpb24iOlstMjAsNC4yNSw2NV19LHsibWVzaCI6MSwibmFtZSI6IkJ1aWxkaW5nXzIiLCJzY2FsZSI6WzcsNC4yNSwxMF0sInRyYW5zbGF0aW9uIjpbLTIwLDQuMjUsMzldfSx7Im1lc2giOjIsIm5hbWUiOiJCdWlsZGluZ18zIiwic2NhbGUiOls3LDQuMjUsMTBdLCJ0cmFuc2xhdGlvbiI6Wy0yMCw0LjI1LDEzXX0seyJtZXNoIjozLCJuYW1lIjoiQnVpbGRpbmdfNCIsInNjYWxlIjpbNyw0LjI1LDEwXSwidHJhbnNsYXRpb24iOlstMjAsNC4yNSwtMTNdfSx7Im1lc2giOjQsIm5hbWUiOiJCdWlsZGluZ181Iiwic2NhbGUiOls3LDQuMjUsMTBdLCJ0cmFuc2xhdGlvbiI6Wy0yMCw0LjI1LC0zOV19LHsibWVzaCI6NSwibmFtZSI6IkJ1aWxkaW5nXzYiLCJzY2FsZSI6WzcsNC4yNSwxMF0sInRyYW5zbGF0aW9uIjpbLTIwLDQuMjUsLTY1XX0seyJtZXNoIjo2LCJuYW1lIjoiQnVpbGRpbmdfNyIsInNjYWxlIjpbNyw0LjI1LDEwXSwidHJhbnNsYXRpb24iOlsyMCw0LjI1LC02NV19LHsibWVzaCI6NywibmFtZSI6IkJ1aWxkaW5nXzgiLCJzY2FsZSI6WzcsNC4yNSwxMF0sInRyYW5zbGF0aW9uIjpbMjAsNC4yNSwtMzldfSx7Im1lc2giOjgsIm5hbWUiOiJCdWlsZGluZ185Iiwic2NhbGUiOls3LDQuMjUsMTBdLCJ0cmFuc2xhdGlvbiI6WzIwLDQuMjUsLTEzXX0seyJtZXNoIjo5LCJuYW1lIjoiQnVpbGRpbmdfMTAiLCJzY2FsZSI6WzcsNC4yNSwxMF0sInRyYW5zbGF0aW9uIjpbMjAsNC4yNSwxM119LHsibWVzaCI6MTAsIm5hbWUiOiJCdWlsZGluZ18xMSIsInNjYWxlIjpbNyw0LjI1LDEwXSwidHJhbnNsYXRpb24iOlsyMCw0LjI1LDM5XX0seyJtZXNoIjoxMSwibmFtZSI6IkJ1aWxkaW5nXzEyIiwic2NhbGUiOls3LDQuMjUsMTBdLCJ0cmFuc2xhdGlvbiI6WzIwLDQuMjUsNjVdfSx7Im1lc2giOjEyLCJuYW1lIjoiQ2FtcHVzX0dyb3VuZCIsInNjYWxlIjpbMC41NTAwMDAwMTE5MjA5MjksMSwxLjI1XX0seyJtZXNoIjoxMywibmFtZSI6IkNlbnRyYWxfQ291cnR5YXJkX0dhcmRlbiIsInNjYWxlIjpbMC40MDAwMDAwMDU5NjA0NjQ1LDEsNV0sInRyYW5zbGF0aW9uIjpbMCwwLjAxOTk5OTk5OTU1Mjk2NTE2NCwwXX0seyJtZXNoIjoxNCwibmFtZSI6IkNvcnJpZG9yX0JyaWRnZV9GbG9vcjFfRWFzdCIsInNjYWxlIjpbMS43NSwwLjE1MDAwMDAwNTk2MDQ2NDQ4LDc3LjVdLCJ0cmFuc2xhdGlvbiI6WzEwLjUsNC41LDBdfSx7Im1lc2giOjE1LCJuYW1lIjoiQ29ycmlkb3JfQnJpZGdlX0Zsb29yMV9XZXN0Iiwic2NhbGUiOlsxLjc1LDAuMTUwMDAwMDA1OTYwNDY0NDgsNzcuNV0sInRyYW5zbGF0aW9uIjpbLTEwLjUsNC41LDBdfSx7Im1lc2giOjE2LCJuYW1lIjoiQ29ycmlkb3JfR3JvdW5kX0Vhc3QiLCJzY2FsZSI6WzEuNzUsMC4xNTAwMDAwMDU5NjA0NjQ0OCw3Ny41XSwidHJhbnNsYXRpb24iOlsxMC41LDAuMTUwMDAwMDA1OTYwNDY0NDgsMF19LHsibWVzaCI6MTcsIm5hbWUiOiJDb3JyaWRvcl9Hcm91bmRfV2VzdCIsInNjYWxlIjpbMS43NSwwLjE1MDAwMDAwNTk2MDQ2NDQ4LDc3LjVdLCJ0cmFuc2xhdGlvbiI6Wy0xMC41LDAuMTUwMDAwMDA1OTYwNDY0NDgsMF19LHsibWVzaCI6MTgsIm5hbWUiOiJDcm9zc19CcmlkZ2VfMSIsInNjYWxlIjpbMTAuNSwwLjE1MDAwMDAwNTk2MDQ2NDQ4LDEuNzVdLCJ0cmFuc2xhdGlvbiI6WzAsNC41LDY1XX0seyJtZXNoIjoxOSwibmFtZSI6IkNyb3NzX0JyaWRnZV8yIiwic2NhbGUiOlsxMC41LDAuMTUwMDAwMDA1OTYwNDY0NDgsMS43NV0sInRyYW5zbGF0aW9uIjpbMCw0LjUsMF19LHsibWVzaCI6MjAsIm5hbWUiOiJDcm9zc19CcmlkZ2VfMyIsInNjYWxlIjpbMTAuNSwwLjE1MDAwMDAwNTk2MDQ2NDQ4LDEuNzVdLCJ0cmFuc2xhdGlvbiI6WzAsNC41LC02NV19LHsibmFtZSI6Ik5vZGVfQnVpbGRpbmdfMSIsInRyYW5zbGF0aW9uIjpbLTEzLDAuMzAwMDAwMDExOTIwOTI4OTYsNjVdfSx7Im5hbWUiOiJOb2RlX0J1aWxkaW5nXzIiLCJ0cmFuc2xhdGlvbiI6Wy0xMywwLjMwMDAwMDAxMTkyMDkyODk2LDM5XX0seyJuYW1lIjoiTm9kZV9CdWlsZGluZ18zIiwidHJhbnNsYXRpb24iOlstMTMsMC4zMDAwMDAwMTE5MjA5Mjg5NiwxM119LHsibmFtZSI6Ik5vZGVfQnVpbGRpbmdfNCIsInRyYW5zbGF0aW9uIjpbLTEzLDAuMzAwMDAwMDExOTIwOTI4OTYsLTEzXX0seyJuYW1lIjoiTm9kZV9CdWlsZGluZ181IiwidHJhbnNsYXRpb24iOlstMTMsMC4zMDAwMDAwMTE5MjA5Mjg5NiwtMzldfSx7Im5hbWUiOiJOb2RlX0J1aWxkaW5nXzYiLCJ0cmFuc2xhdGlvbiI6Wy0xMywwLjMwMDAwMDAxMTkyMDkyODk2LC02NV19LHsibmFtZSI6Ik5vZGVfQnVpbGRpbmdfNyIsInRyYW5zbGF0aW9uIjpbMTMsMC4zMDAwMDAwMTE5MjA5Mjg5NiwtNjVdfSx7Im5hbWUiOiJOb2RlX0J1aWxkaW5nXzgiLCJ0cmFuc2xhdGlvbiI6WzEzLDAuMzAwMDAwMDExOTIwOTI4OTYsLTM5XX0seyJuYW1lIjoiTm9kZV9CdWlsZGluZ185IiwidHJhbnNsYXRpb24iOlsxMywwLjMwMDAwMDAxMTkyMDkyODk2LC0xM119LHsibmFtZSI6Ik5vZGVfQnVpbGRpbmdfMTAiLCJ0cmFuc2xhdGlvbiI6WzEzLDAuMzAwMDAwMDExOTIwOTI4OTYsMTNdfSx7Im5hbWUiOiJOb2RlX0J1aWxkaW5nXzExIiwidHJhbnNsYXRpb24iOlsxMywwLjMwMDAwMDAxMTkyMDkyODk2LDM5XX0seyJuYW1lIjoiTm9kZV9CdWlsZGluZ18xMiIsInRyYW5zbGF0aW9uIjpbMTMsMC4zMDAwMDAwMTE5MjA5Mjg5Niw2NV19LHsibmFtZSI6Ik5vZGVfU3RhaXJzX0Vhc3RfOV84X0YxIiwidHJhbnNsYXRpb24iOlsxMC41LDQuNjk5OTk5ODA5MjY1MTM3LC0yNl19LHsibmFtZSI6Ik5vZGVfU3RhaXJzX0Vhc3RfOV84X0ciLCJ0cmFuc2xhdGlvbiI6WzEwLjUsMC4zMDAwMDAwMTE5MjA5Mjg5NiwtMjZdfSx7Im5hbWUiOiJOb2RlX1N0YWlyc19FYXN0XzExXzEwX0YxIiwidHJhbnNsYXRpb24iOlsxMC41LDQuNjk5OTk5ODA5MjY1MTM3LDI2XX0seyJuYW1lIjoiTm9kZV9TdGFpcnNfRWFzdF8xMV8xMF9HIiwidHJhbnNsYXRpb24iOlsxMC41LDAuMzAwMDAwMDExOTIwOTI4OTYsMjZdfSx7Im5hbWUiOiJOb2RlX1N0YWlyc19Ob3J0aF9DZW50ZXJfRjEiLCJ0cmFuc2xhdGlvbiI6WzAsNC42OTk5OTk4MDkyNjUxMzcsLTY1XX0seyJuYW1lIjoiTm9kZV9TdGFpcnNfTm9ydGhfQ2VudGVyX0ciLCJ0cmFuc2xhdGlvbiI6WzAsMC4zMDAwMDAwMTE5MjA5Mjg5NiwtNjVdfSx7Im5hbWUiOiJOb2RlX1N0YWlyc19Tb3V0aF9DZW50ZXJfRjEiLCJ0cmFuc2xhdGlvbiI6WzAsNC42OTk5OTk4MDkyNjUxMzcsNjVdfSx7Im5hbWUiOiJOb2RlX1N0YWlyc19Tb3V0aF9DZW50ZXJfRyIsInRyYW5zbGF0aW9uIjpbMCwwLjMwMDAwMDAxMTkyMDkyODk2LDY1XX0seyJuYW1lIjoiTm9kZV9TdGFpcnNfV2VzdF8yXzNfRjEiLCJ0cmFuc2xhdGlvbiI6Wy0xMC41LDQuNjk5OTk5ODA5MjY1MTM3LDI2XX0seyJuYW1lIjoiTm9kZV9TdGFpcnNfV2VzdF8yXzNfRyIsInRyYW5zbGF0aW9uIjpbLTEwLjUsMC4zMDAwMDAwMTE5MjA5Mjg5NiwyNl19LHsibmFtZSI6Ik5vZGVfU3RhaXJzX1dlc3RfNF81X0YxIiwidHJhbnNsYXRpb24iOlstMTAuNSw0LjY5OTk5OTgwOTI2NTEzNywtMjZdfSx7Im5hbWUiOiJOb2RlX1N0YWlyc19XZXN0XzRfNV9HIiwidHJhbnNsYXRpb24iOlstMTAuNSwwLjMwMDAwMDAxMTkyMDkyODk2LC0yNl19LHsibWVzaCI6MjEsIm5hbWUiOiJSb29mX0J1aWxkaW5nXzEiLCJzY2FsZSI6WzcuNzUsMC4zMDAwMDAwMTE5MjA5Mjg5NiwxMC41XSwidHJhbnNsYXRpb24iOlstMjAsOC44MDAwMDAxOTA3MzQ4NjMsNjVdfSx7Im1lc2giOjIyLCJuYW1lIjoiUm9vZl9CdWlsZGluZ18yIiwic2NhbGUiOls3Ljc1LDAuMzAwMDAwMDExOTIwOTI4OTYsMTAuNV0sInRyYW5zbGF0aW9uIjpbLTIwLDguODAwMDAwMTkwNzM0ODYzLDM5XX0seyJtZXNoIjoyMywibmFtZSI6IlJvb2ZfQnVpbGRpbmdfMyIsInNjYWxlIjpbNy43NSwwLjMwMDAwMDAxMTkyMDkyODk2LDEwLjVdLCJ0cmFuc2xhdGlvbiI6Wy0yMCw4LjgwMDAwMDE5MDczNDg2MywxM119LHsibWVzaCI6MjQsIm5hbWUiOiJSb29mX0J1aWxkaW5nXzQiLCJzY2FsZSI6WzcuNzUsMC4zMDAwMDAwMTE5MjA5Mjg5NiwxMC41XSwidHJhbnNsYXRpb24iOlstMjAsOC44MDAwMDAxOTA3MzQ4NjMsLTEzXX0seyJtZXNoIjoyNSwibmFtZSI6IlJvb2ZfQnVpbGRpbmdfNSIsInNjYWxlIjpbNy43NSwwLjMwMDAwMDAxMTkyMDkyODk2LDEwLjVdLCJ0cmFuc2xhdGlvbiI6Wy0yMCw4LjgwMDAwMDE5MDczNDg2MywtMzldfSx7Im1lc2giOjI2LCJuYW1lIjoiUm9vZl9CdWlsZGluZ182Iiwic2NhbGUiOls3Ljc1LDAuMzAwMDAwMDExOTIwOTI4OTYsMTAuNV0sInRyYW5zbGF0aW9uIjpbLTIwLDguODAwMDAwMTkwNzM0ODYzLC02NV19LHsibWVzaCI6MjcsIm5hbWUiOiJSb29mX0J1aWxkaW5nXzciLCJzY2FsZSI6WzcuNzUsMC4zMDAwMDAwMTE5MjA5Mjg5NiwxMC41XSwidHJhbnNsYXRpb24iOlsyMCw4LjgwMDAwMDE5MDczNDg2MywtNjVdfSx7Im1lc2giOjI4LCJuYW1lIjoiUm9vZl9CdWlsZGluZ184Iiwic2NhbGUiOls3Ljc1LDAuMzAwMDAwMDExOTIwOTI4OTYsMTAuNV0sInRyYW5zbGF0aW9uIjpbMjAsOC44MDAwMDAxOTA3MzQ4NjMsLTM5XX0seyJtZXNoIjoyOSwibmFtZSI6IlJvb2ZfQnVpbGRpbmdfOSIsInNjYWxlIjpbNy43NSwwLjMwMDAwMDAxMTkyMDkyODk2LDEwLjVdLCJ0cmFuc2xhdGlvbiI6WzIwLDguODAwMDAwMTkwNzM0ODYzLC0xM119LHsibWVzaCI6MzAsIm5hbWUiOiJSb29mX0J1aWxkaW5nXzEwIiwic2NhbGUiOls3Ljc1LDAuMzAwMDAwMDExOTIwOTI4OTYsMTAuNV0sInRyYW5zbGF0aW9uIjpbMjAsOC44MDAwMDAxOTA3MzQ4NjMsMTNdfSx7Im1lc2giOjMxLCJuYW1lIjoiUm9vZl9CdWlsZGluZ18xMSIsInNjYWxlIjpbNy43NSwwLjMwMDAwMDAxMTkyMDkyODk2LDEwLjVdLCJ0cmFuc2xhdGlvbiI6WzIwLDguODAwMDAwMTkwNzM0ODYzLDM5XX0seyJtZXNoIjozMiwibmFtZSI6IlJvb2ZfQnVpbGRpbmdfMTIiLCJzY2FsZSI6WzcuNzUsMC4zMDAwMDAwMTE5MjA5Mjg5NiwxMC41XSwidHJhbnNsYXRpb24iOlsyMCw4LjgwMDAwMDE5MDczNDg2Myw2NV19LHsibWVzaCI6MzMsIm5hbWUiOiJTdGFpcnNfRWFzdF85XzgiLCJzY2FsZSI6WzEuNSwyLjI1LDIuNV0sInRyYW5zbGF0aW9uIjpbMTAuNSwyLjI1LC0yNl19LHsibWVzaCI6MzQsIm5hbWUiOiJTdGFpcnNfRWFzdF8xMV8xMCIsInNjYWxlIjpbMS41LDIuMjUsMi41XSwidHJhbnNsYXRpb24iOlsxMC41LDIuMjUsMjZdfSx7Im1lc2giOjM1LCJuYW1lIjoiU3RhaXJzX05vcnRoX0NlbnRlciIsInNjYWxlIjpbMS41LDIuMjUsMi41XSwidHJhbnNsYXRpb24iOlswLDIuMjUsLTY1XX0seyJtZXNoIjozNiwibmFtZSI6IlN0YWlyc19Tb3V0aF9DZW50ZXIiLCJzY2FsZSI6WzEuNSwyLjI1LDIuNV0sInRyYW5zbGF0aW9uIjpbMCwyLjI1LDY1XX0seyJtZXNoIjozNywibmFtZSI6IlN0YWlyc19XZXN0XzJfMyIsInNjYWxlIjpbMS41LDIuMjUsMi41XSwidHJhbnNsYXRpb24iOlstMTAuNSwyLjI1LDI2XX0seyJtZXNoIjozOCwibmFtZSI6IlN0YWlyc19XZXN0XzRfNSIsInNjYWxlIjpbMS41LDIuMjUsMi41XSwidHJhbnNsYXRpb24iOlstMTAuNSwyLjI1LC0yNl19XSwibWF0ZXJpYWxzIjpbeyJkb3VibGVTaWRlZCI6dHJ1ZSwibmFtZSI6IkNvbGxlZ2VfQnJpY2siLCJwYnJNZXRhbGxpY1JvdWdobmVzcyI6eyJiYXNlQ29sb3JGYWN0b3IiOlswLjc1OTk5OTk5MDQ2MzI1NjgsMC40MTk5OTk5ODY4ODY5NzgxNSwwLjM3OTk5OTk5NTIzMTYyODQsMV0sIm1ldGFsbGljRmFjdG9yIjowLCJyb3VnaG5lc3NGYWN0b3IiOjAuODAwMDAwMDExOTIwOTI5fX0seyJkb3VibGVTaWRlZCI6dHJ1ZSwibmFtZSI6IkNvbGxlZ2VfUGF2ZW1lbnQiLCJwYnJNZXRhbGxpY1JvdWdobmVzcyI6eyJiYXNlQ29sb3JGYWN0b3IiOlswLjcyMDAwMDAyODYxMDIyOTUsMC42OTk5OTk5ODgwNzkwNzEsMC42NjAwMDAwMjYyMjYwNDM3LDFdLCJtZXRhbGxpY0ZhY3RvciI6MCwicm91Z2huZXNzRmFjdG9yIjowLjgwMDAwMDAxMTkyMDkyOX19LHsiZG91YmxlU2lkZWQiOnRydWUsIm5hbWUiOiJDb3VydHlhcmRfR3JlZW4iLCJwYnJNZXRhbGxpY1JvdWdobmVzcyI6eyJiYXNlQ29sb3JGYWN0b3IiOlswLjIxOTk5OTk5ODgwNzkwNzEsMC40NDk5OTk5ODgwNzkwNzEwNCwwLjE4MDAwMDAwNzE1MjU1NzM3LDFdLCJtZXRhbGxpY0ZhY3RvciI6MCwicm91Z2huZXNzRmFjdG9yIjowLjgwMDAwMDAxMTkyMDkyOX19LHsiZG91YmxlU2lkZWQiOnRydWUsIm5hbWUiOiJDb2xsZWdlX0NvbmNyZXRlIiwicGJyTWV0YWxsaWNSb3VnaG5lc3MiOnsiYmFzZUNvbG9yRmFjdG9yIjpbMC44NTAwMDAwMjM4NDE4NTc5LDAuODE5OTk5OTkyODQ3NDQyNiwwLjc1LDFdLCJtZXRhbGxpY0ZhY3RvciI6MCwicm91Z2huZXNzRmFjdG9yIjowLjgwMDAwMDAxMTkyMDkyOX19LHsiZG91YmxlU2lkZWQiOnRydWUsIm5hbWUiOiJDb2xsZWdlX1N0YWlycyIsInBick1ldGFsbGljUm91Z2huZXNzIjp7ImJhc2VDb2xvckZhY3RvciI6WzAuNSwwLjUsMC41MTk5OTk5ODA5MjY1MTM3LDFdLCJtZXRhbGxpY0ZhY3RvciI6MCwicm91Z2huZXNzRmFjdG9yIjowLjgwMDAwMDAxMTkyMDkyOX19XSwibWVzaGVzIjpbeyJuYW1lIjoiXHVmZTkwXHVmZWNjXHVmZWRjXHVmZWUzIiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6MCwiTk9STUFMIjoxLCJURVhDT09SRF8wIjoyfSwiaW5kaWNlcyI6MywibWF0ZXJpYWwiOjB9XX0seyJuYW1lIjoiXHVmZTkwXHVmZWNjXHVmZWRjXHVmZWUzLjAwMiIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjQsIk5PUk1BTCI6NSwiVEVYQ09PUkRfMCI6Nn0sImluZGljZXMiOjMsIm1hdGVyaWFsIjowfV19LHsibmFtZSI6Ilx1ZmU5MFx1ZmVjY1x1ZmVkY1x1ZmVlMy4wMDQiLCJwcmltaXRpdmVzIjpbeyJhdHRyaWJ1dGVzIjp7IlBPU0lUSU9OIjo3LCJOT1JNQUwiOjgsIlRFWENPT1JEXzAiOjl9LCJpbmRpY2VzIjozLCJtYXRlcmlhbCI6MH1dfSx7Im5hbWUiOiJcdWZlOTBcdWZlY2NcdWZlZGNcdWZlZTMuMDA2IiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6MTAsIk5PUk1BTCI6MTEsIlRFWENPT1JEXzAiOjEyfSwiaW5kaWNlcyI6MywibWF0ZXJpYWwiOjB9XX0seyJuYW1lIjoiXHVmZTkwXHVmZWNjXHVmZWRjXHVmZWUzLjAwOCIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjEzLCJOT1JNQUwiOjE0LCJURVhDT09SRF8wIjoxNX0sImluZGljZXMiOjMsIm1hdGVyaWFsIjowfV19LHsibmFtZSI6Ilx1ZmU5MFx1ZmVjY1x1ZmVkY1x1ZmVlMy4wMTAiLCJwcmltaXRpdmVzIjpbeyJhdHRyaWJ1dGVzIjp7IlBPU0lUSU9OIjoxNiwiTk9STUFMIjoxNywiVEVYQ09PUkRfMCI6MTh9LCJpbmRpY2VzIjozLCJtYXRlcmlhbCI6MH1dfSx7Im5hbWUiOiJcdWZlOTBcdWZlY2NcdWZlZGNcdWZlZTMuMDIyIiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6MTksIk5PUk1BTCI6MjAsIlRFWENPT1JEXzAiOjIxfSwiaW5kaWNlcyI6MywibWF0ZXJpYWwiOjB9XX0seyJuYW1lIjoiXHVmZTkwXHVmZWNjXHVmZWRjXHVmZWUzLjAyMCIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjIyLCJOT1JNQUwiOjIzLCJURVhDT09SRF8wIjoyNH0sImluZGljZXMiOjMsIm1hdGVyaWFsIjowfV19LHsibmFtZSI6Ilx1ZmU5MFx1ZmVjY1x1ZmVkY1x1ZmVlMy4wMTgiLCJwcmltaXRpdmVzIjpbeyJhdHRyaWJ1dGVzIjp7IlBPU0lUSU9OIjoyNSwiTk9STUFMIjoyNiwiVEVYQ09PUkRfMCI6Mjd9LCJpbmRpY2VzIjozLCJtYXRlcmlhbCI6MH1dfSx7Im5hbWUiOiJcdWZlOTBcdWZlY2NcdWZlZGNcdWZlZTMuMDE2IiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6MjgsIk5PUk1BTCI6MjksIlRFWENPT1JEXzAiOjMwfSwiaW5kaWNlcyI6MywibWF0ZXJpYWwiOjB9XX0seyJuYW1lIjoiXHVmZTkwXHVmZWNjXHVmZWRjXHVmZWUzLjAxNCIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjMxLCJOT1JNQUwiOjMyLCJURVhDT09SRF8wIjozM30sImluZGljZXMiOjMsIm1hdGVyaWFsIjowfV19LHsibmFtZSI6Ilx1ZmU5MFx1ZmVjY1x1ZmVkY1x1ZmVlMy4wMTIiLCJwcmltaXRpdmVzIjpbeyJhdHRyaWJ1dGVzIjp7IlBPU0lUSU9OIjozNCwiTk9STUFMIjozNSwiVEVYQ09PUkRfMCI6MzZ9LCJpbmRpY2VzIjozLCJtYXRlcmlhbCI6MH1dfSx7Im5hbWUiOiJcdWZlYTJcdWZlYzRcdWZlYjRcdWZlZTMiLCJwcmltaXRpdmVzIjpbeyJhdHRyaWJ1dGVzIjp7IlBPU0lUSU9OIjozNywiTk9STUFMIjozOCwiVEVYQ09PUkRfMCI6Mzl9LCJpbmRpY2VzIjo0MCwibWF0ZXJpYWwiOjF9XX0seyJuYW1lIjoiXHVmZWEyXHVmZWM0XHVmZWI0XHVmZWUzLjAwMSIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjQxLCJOT1JNQUwiOjQyLCJURVhDT09SRF8wIjo0M30sImluZGljZXMiOjQwLCJtYXRlcmlhbCI6Mn1dfSx7Im5hbWUiOiJcdWZlOTBcdWZlY2NcdWZlZGNcdWZlZTMuMDI3IiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6NDQsIk5PUk1BTCI6NDUsIlRFWENPT1JEXzAiOjQ2fSwiaW5kaWNlcyI6MywibWF0ZXJpYWwiOjN9XX0seyJuYW1lIjoiXHVmZTkwXHVmZWNjXHVmZWRjXHVmZWUzLjAyNSIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjQ3LCJOT1JNQUwiOjQ4LCJURVhDT09SRF8wIjo0OX0sImluZGljZXMiOjMsIm1hdGVyaWFsIjozfV19LHsibmFtZSI6Ilx1ZmU5MFx1ZmVjY1x1ZmVkY1x1ZmVlMy4wMjYiLCJwcmltaXRpdmVzIjpbeyJhdHRyaWJ1dGVzIjp7IlBPU0lUSU9OIjo1MCwiTk9STUFMIjo1MSwiVEVYQ09PUkRfMCI6NTJ9LCJpbmRpY2VzIjozLCJtYXRlcmlhbCI6M31dfSx7Im5hbWUiOiJcdWZlOTBcdWZlY2NcdWZlZGNcdWZlZTMuMDI0IiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6NTMsIk5PUk1BTCI6NTQsIlRFWENPT1JEXzAiOjU1fSwiaW5kaWNlcyI6MywibWF0ZXJpYWwiOjN9XX0seyJuYW1lIjoiXHVmZTkwXHVmZWNjXHVmZWRjXHVmZWUzLjAyOCIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjU2LCJOT1JNQUwiOjU3LCJURVhDT09SRF8wIjo1OH0sImluZGljZXMiOjMsIm1hdGVyaWFsIjozfV19LHsibmFtZSI6Ilx1ZmU5MFx1ZmVjY1x1ZmVkY1x1ZmVlMy4wMjkiLCJwcmltaXRpdmVzIjpbeyJhdHRyaWJ1dGVzIjp7IlBPU0lUSU9OIjo1OSwiTk9STUFMIjo2MCwiVEVYQ09PUkRfMCI6NjF9LCJpbmRpY2VzIjozLCJtYXRlcmlhbCI6M31dfSx7Im5hbWUiOiJcdWZlOTBcdWZlY2NcdWZlZGNcdWZlZTMuMDMwIiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6NjIsIk5PUk1BTCI6NjMsIlRFWENPT1JEXzAiOjY0fSwiaW5kaWNlcyI6MywibWF0ZXJpYWwiOjN9XX0seyJuYW1lIjoiXHVmZTkwXHVmZWNjXHVmZWRjXHVmZWUzLjAwMSIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjY1LCJOT1JNQUwiOjY2LCJURVhDT09SRF8wIjo2N30sImluZGljZXMiOjMsIm1hdGVyaWFsIjozfV19LHsibmFtZSI6Ilx1ZmU5MFx1ZmVjY1x1ZmVkY1x1ZmVlMy4wMDMiLCJwcmltaXRpdmVzIjpbeyJhdHRyaWJ1dGVzIjp7IlBPU0lUSU9OIjo2OCwiTk9STUFMIjo2OSwiVEVYQ09PUkRfMCI6NzB9LCJpbmRpY2VzIjozLCJtYXRlcmlhbCI6M31dfSx7Im5hbWUiOiJcdWZlOTBcdWZlY2NcdWZlZGNcdWZlZTMuMDA1IiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6NzEsIk5PUk1BTCI6NzIsIlRFWENPT1JEXzAiOjczfSwiaW5kaWNlcyI6MywibWF0ZXJpYWwiOjN9XX0seyJuYW1lIjoiXHVmZTkwXHVmZWNjXHVmZWRjXHVmZWUzLjAwNyIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjc0LCJOT1JNQUwiOjc1LCJURVhDT09SRF8wIjo3Nn0sImluZGljZXMiOjMsIm1hdGVyaWFsIjozfV19LHsibmFtZSI6Ilx1ZmU5MFx1ZmVjY1x1ZmVkY1x1ZmVlMy4wMDkiLCJwcmltaXRpdmVzIjpbeyJhdHRyaWJ1dGVzIjp7IlBPU0lUSU9OIjo3NywiTk9STUFMIjo3OCwiVEVYQ09PUkRfMCI6Nzl9LCJpbmRpY2VzIjozLCJtYXRlcmlhbCI6M31dfSx7Im5hbWUiOiJcdWZlOTBcdWZlY2NcdWZlZGNcdWZlZTMuMDExIiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6ODAsIk5PUk1BTCI6ODEsIlRFWENPT1JEXzAiOjgyfSwiaW5kaWNlcyI6MywibWF0ZXJpYWwiOjN9XX0seyJuYW1lIjoiXHVmZTkwXHVmZWNjXHVmZWRjXHVmZWUzLjAyMyIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjgzLCJOT1JNQUwiOjg0LCJURVhDT09SRF8wIjo4NX0sImluZGljZXMiOjMsIm1hdGVyaWFsIjozfV19LHsibmFtZSI6Ilx1ZmU5MFx1ZmVjY1x1ZmVkY1x1ZmVlMy4wMjEiLCJwcmltaXRpdmVzIjpbeyJhdHRyaWJ1dGVzIjp7IlBPU0lUSU9OIjo4NiwiTk9STUFMIjo4NywiVEVYQ09PUkRfMCI6ODh9LCJpbmRpY2VzIjozLCJtYXRlcmlhbCI6M31dfSx7Im5hbWUiOiJcdWZlOTBcdWZlY2NcdWZlZGNcdWZlZTMuMDE5IiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6ODksIk5PUk1BTCI6OTAsIlRFWENPT1JEXzAiOjkxfSwiaW5kaWNlcyI6MywibWF0ZXJpYWwiOjN9XX0seyJuYW1lIjoiXHVmZTkwXHVmZWNjXHVmZWRjXHVmZWUzLjAxNyIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjkyLCJOT1JNQUwiOjkzLCJURVhDT09SRF8wIjo5NH0sImluZGljZXMiOjMsIm1hdGVyaWFsIjozfV19LHsibmFtZSI6Ilx1ZmU5MFx1ZmVjY1x1ZmVkY1x1ZmVlMy4wMTUiLCJwcmltaXRpdmVzIjpbeyJhdHRyaWJ1dGVzIjp7IlBPU0lUSU9OIjo5NSwiTk9STUFMIjo5NiwiVEVYQ09PUkRfMCI6OTd9LCJpbmRpY2VzIjozLCJtYXRlcmlhbCI6M31dfSx7Im5hbWUiOiJcdWZlOTBcdWZlY2NcdWZlZGNcdWZlZTMuMDEzIiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6OTgsIk5PUk1BTCI6OTksIlRFWENPT1JEXzAiOjEwMH0sImluZGljZXMiOjMsIm1hdGVyaWFsIjozfV19LHsibmFtZSI6Ilx1ZmU5MFx1ZmVjY1x1ZmVkY1x1ZmVlMy4wMzUiLCJwcmltaXRpdmVzIjpbeyJhdHRyaWJ1dGVzIjp7IlBPU0lUSU9OIjoxMDEsIk5PUk1BTCI6MTAyLCJURVhDT09SRF8wIjoxMDN9LCJpbmRpY2VzIjozLCJtYXRlcmlhbCI6NH1dfSx7Im5hbWUiOiJcdWZlOTBcdWZlY2NcdWZlZGNcdWZlZTMuMDMzIiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6MTA0LCJOT1JNQUwiOjEwNSwiVEVYQ09PUkRfMCI6MTA2fSwiaW5kaWNlcyI6MywibWF0ZXJpYWwiOjR9XX0seyJuYW1lIjoiXHVmZTkwXHVmZWNjXHVmZWRjXHVmZWUzLjAzNiIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjEwNywiTk9STUFMIjoxMDgsIlRFWENPT1JEXzAiOjEwOX0sImluZGljZXMiOjMsIm1hdGVyaWFsIjo0fV19LHsibmFtZSI6Ilx1ZmU5MFx1ZmVjY1x1ZmVkY1x1ZmVlMy4wMzEiLCJwcmltaXRpdmVzIjpbeyJhdHRyaWJ1dGVzIjp7IlBPU0lUSU9OIjoxMTAsIk5PUk1BTCI6MTExLCJURVhDT09SRF8wIjoxMTJ9LCJpbmRpY2VzIjozLCJtYXRlcmlhbCI6NH1dfSx7Im5hbWUiOiJcdWZlOTBcdWZlY2NcdWZlZGNcdWZlZTMuMDMyIiwicHJpbWl0aXZlcyI6W3siYXR0cmlidXRlcyI6eyJQT1NJVElPTiI6MTEzLCJOT1JNQUwiOjExNCwiVEVYQ09PUkRfMCI6MTE1fSwiaW5kaWNlcyI6MywibWF0ZXJpYWwiOjR9XX0seyJuYW1lIjoiXHVmZTkwXHVmZWNjXHVmZWRjXHVmZWUzLjAzNCIsInByaW1pdGl2ZXMiOlt7ImF0dHJpYnV0ZXMiOnsiUE9TSVRJT04iOjExNiwiTk9STUFMIjoxMTcsIlRFWENPT1JEXzAiOjExOH0sImluZGljZXMiOjMsIm1hdGVyaWFsIjo0fV19XSwiYWNjZXNzb3JzIjpbeyJidWZmZXJWaWV3IjowLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsIm1heCI6WzEsMSwxXSwibWluIjpbLTEsLTEsLTFdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MiwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMiJ9LHsiYnVmZmVyVmlldyI6MywiY29tcG9uZW50VHlwZSI6NTEyMywiY291bnQiOjM2LCJ0eXBlIjoiU0NBTEFSIn0seyJidWZmZXJWaWV3Ijo0LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsIm1heCI6WzEsMSwxXSwibWluIjpbLTEsLTEsLTFdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6NSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6NiwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMiJ9LHsiYnVmZmVyVmlldyI6NywiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJtYXgiOlsxLDEsMV0sIm1pbiI6Wy0xLC0xLC0xXSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjgsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjksImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjEwLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsIm1heCI6WzEsMSwxXSwibWluIjpbLTEsLTEsLTFdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MTEsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjEyLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3IjoxMywiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJtYXgiOlsxLDEsMV0sIm1pbiI6Wy0xLC0xLC0xXSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjE0LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3IjoxNSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMiJ9LHsiYnVmZmVyVmlldyI6MTYsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwibWF4IjpbMSwxLDFdLCJtaW4iOlstMSwtMSwtMV0sInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3IjoxNywiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MTgsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjE5LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsIm1heCI6WzEsMSwxXSwibWluIjpbLTEsLTEsLTFdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MjAsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjIxLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3IjoyMiwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJtYXgiOlsxLDEsMV0sIm1pbiI6Wy0xLC0xLC0xXSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjIzLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3IjoyNCwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMiJ9LHsiYnVmZmVyVmlldyI6MjUsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwibWF4IjpbMSwxLDFdLCJtaW4iOlstMSwtMSwtMV0sInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3IjoyNiwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MjcsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjI4LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsIm1heCI6WzEsMSwxXSwibWluIjpbLTEsLTEsLTFdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MjksImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjMwLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3IjozMSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJtYXgiOlsxLDEsMV0sIm1pbiI6Wy0xLC0xLC0xXSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjMyLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3IjozMywiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMiJ9LHsiYnVmZmVyVmlldyI6MzQsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwibWF4IjpbMSwxLDFdLCJtaW4iOlstMSwtMSwtMV0sInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3IjozNSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MzYsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjM3LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6NCwibWF4IjpbNzAsMCw3MF0sIm1pbiI6Wy03MCwwLC03MF0sInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3IjozOCwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjQsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3IjozOSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjQsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3Ijo0MCwiY29tcG9uZW50VHlwZSI6NTEyMywiY291bnQiOjYsInR5cGUiOiJTQ0FMQVIifSx7ImJ1ZmZlclZpZXciOjQxLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6NCwibWF4IjpbMTAsMCwxMF0sIm1pbiI6Wy0xMCwwLC0xMF0sInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo0MiwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjQsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo0MywiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjQsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3Ijo0NCwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJtYXgiOlsxLDEsMV0sIm1pbiI6Wy0xLC0xLC0xXSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjQ1LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo0NiwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMiJ9LHsiYnVmZmVyVmlldyI6NDcsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwibWF4IjpbMSwxLDFdLCJtaW4iOlstMSwtMSwtMV0sInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo0OCwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6NDksImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjUwLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsIm1heCI6WzEsMSwxXSwibWluIjpbLTEsLTEsLTFdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6NTEsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjUyLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3Ijo1MywiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJtYXgiOlsxLDEsMV0sIm1pbiI6Wy0xLC0xLC0xXSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjU0LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo1NSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMiJ9LHsiYnVmZmVyVmlldyI6NTYsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwibWF4IjpbMSwxLDFdLCJtaW4iOlstMSwtMSwtMV0sInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo1NywiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6NTgsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjU5LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsIm1heCI6WzEsMSwxXSwibWluIjpbLTEsLTEsLTFdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6NjAsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjYxLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3Ijo2MiwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJtYXgiOlsxLDEsMV0sIm1pbiI6Wy0xLC0xLC0xXSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjYzLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo2NCwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMiJ9LHsiYnVmZmVyVmlldyI6NjUsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwibWF4IjpbMSwxLDFdLCJtaW4iOlstMSwtMSwtMV0sInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo2NiwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6NjcsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjY4LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsIm1heCI6WzEsMSwxXSwibWluIjpbLTEsLTEsLTFdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6NjksImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjcwLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3Ijo3MSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJtYXgiOlsxLDEsMV0sIm1pbiI6Wy0xLC0xLC0xXSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjcyLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo3MywiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMiJ9LHsiYnVmZmVyVmlldyI6NzQsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwibWF4IjpbMSwxLDFdLCJtaW4iOlstMSwtMSwtMV0sInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo3NSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6NzYsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjc3LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsIm1heCI6WzEsMSwxXSwibWluIjpbLTEsLTEsLTFdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6NzgsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjc5LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3Ijo4MCwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJtYXgiOlsxLDEsMV0sIm1pbiI6Wy0xLC0xLC0xXSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjgxLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo4MiwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMiJ9LHsiYnVmZmVyVmlldyI6ODMsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwibWF4IjpbMSwxLDFdLCJtaW4iOlstMSwtMSwtMV0sInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo4NCwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6ODUsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjg2LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsIm1heCI6WzEsMSwxXSwibWluIjpbLTEsLTEsLTFdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6ODcsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjg4LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3Ijo4OSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJtYXgiOlsxLDEsMV0sIm1pbiI6Wy0xLC0xLC0xXSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjkwLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo5MSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMiJ9LHsiYnVmZmVyVmlldyI6OTIsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwibWF4IjpbMSwxLDFdLCJtaW4iOlstMSwtMSwtMV0sInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3Ijo5MywiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6OTQsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjk1LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsIm1heCI6WzEsMSwxXSwibWluIjpbLTEsLTEsLTFdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6OTYsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjk3LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3Ijo5OCwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJtYXgiOlsxLDEsMV0sIm1pbiI6Wy0xLC0xLC0xXSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjk5LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3IjoxMDAsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjEwMSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJtYXgiOlsxLDEsMV0sIm1pbiI6Wy0xLC0xLC0xXSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjEwMiwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MTAzLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3IjoxMDQsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwibWF4IjpbMSwxLDFdLCJtaW4iOlstMSwtMSwtMV0sInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3IjoxMDUsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjEwNiwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMiJ9LHsiYnVmZmVyVmlldyI6MTA3LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsIm1heCI6WzEsMSwxXSwibWluIjpbLTEsLTEsLTFdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MTA4LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3IjoxMDksImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzIifSx7ImJ1ZmZlclZpZXciOjExMCwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJtYXgiOlsxLDEsMV0sIm1pbiI6Wy0xLC0xLC0xXSwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjExMSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MTEyLCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMyIn0seyJidWZmZXJWaWV3IjoxMTMsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwibWF4IjpbMSwxLDFdLCJtaW4iOlstMSwtMSwtMV0sInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3IjoxMTQsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzMifSx7ImJ1ZmZlclZpZXciOjExNSwiY29tcG9uZW50VHlwZSI6NTEyNiwiY291bnQiOjI0LCJ0eXBlIjoiVkVDMiJ9LHsiYnVmZmVyVmlldyI6MTE2LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsIm1heCI6WzEsMSwxXSwibWluIjpbLTEsLTEsLTFdLCJ0eXBlIjoiVkVDMyJ9LHsiYnVmZmVyVmlldyI6MTE3LCJjb21wb25lbnRUeXBlIjo1MTI2LCJjb3VudCI6MjQsInR5cGUiOiJWRUMzIn0seyJidWZmZXJWaWV3IjoxMTgsImNvbXBvbmVudFR5cGUiOjUxMjYsImNvdW50IjoyNCwidHlwZSI6IlZFQzIifV0sImJ1ZmZlclZpZXdzIjpbeyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjI4OCwiYnl0ZU9mZnNldCI6MCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjI4OCwiYnl0ZU9mZnNldCI6Mjg4LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6MTkyLCJieXRlT2Zmc2V0Ijo1NzYsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjo3MiwiYnl0ZU9mZnNldCI6NzY4LCJ0YXJnZXQiOjM0OTYzfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0Ijo4NDAsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjExMjgsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxOTIsImJ5dGVPZmZzZXQiOjE0MTYsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjE2MDgsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjE4OTYsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxOTIsImJ5dGVPZmZzZXQiOjIxODQsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjIzNzYsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjI2NjQsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxOTIsImJ5dGVPZmZzZXQiOjI5NTIsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjMxNDQsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjM0MzIsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxOTIsImJ5dGVPZmZzZXQiOjM3MjAsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjM5MTIsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjQyMDAsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxOTIsImJ5dGVPZmZzZXQiOjQ0ODgsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjQ2ODAsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjQ5NjgsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxOTIsImJ5dGVPZmZzZXQiOjUyNTYsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjU0NDgsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjU3MzYsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxOTIsImJ5dGVPZmZzZXQiOjYwMjQsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjYyMTYsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjY1MDQsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxOTIsImJ5dGVPZmZzZXQiOjY3OTIsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjY5ODQsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjcyNzIsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxOTIsImJ5dGVPZmZzZXQiOjc1NjAsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjc3NTIsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjgwNDAsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxOTIsImJ5dGVPZmZzZXQiOjgzMjgsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjg1MjAsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjg4MDgsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxOTIsImJ5dGVPZmZzZXQiOjkwOTYsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjo0OCwiYnl0ZU9mZnNldCI6OTI4OCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjQ4LCJieXRlT2Zmc2V0Ijo5MzM2LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6MzIsImJ5dGVPZmZzZXQiOjkzODQsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoxMiwiYnl0ZU9mZnNldCI6OTQxNiwidGFyZ2V0IjozNDk2M30seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjQ4LCJieXRlT2Zmc2V0Ijo5NDI4LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6NDgsImJ5dGVPZmZzZXQiOjk0NzYsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjozMiwiYnl0ZU9mZnNldCI6OTUyNCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjI4OCwiYnl0ZU9mZnNldCI6OTU1NiwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjI4OCwiYnl0ZU9mZnNldCI6OTg0NCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MTAxMzIsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjEwMzI0LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoxMDYxMiwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MTA5MDAsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjExMDkyLCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoxMTM4MCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MTE2NjgsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjExODYwLCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoxMjE0OCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MTI0MzYsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjEyNjI4LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoxMjkxNiwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MTMyMDQsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjEzMzk2LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoxMzY4NCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MTM5NzIsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjE0MTY0LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoxNDQ1MiwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MTQ3NDAsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjE0OTMyLCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoxNTIyMCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MTU1MDgsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjE1NzAwLCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoxNTk4OCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MTYyNzYsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjE2NDY4LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoxNjc1NiwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MTcwNDQsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjE3MjM2LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoxNzUyNCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MTc4MTIsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjE4MDA0LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoxODI5MiwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MTg1ODAsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjE4NzcyLCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoxOTA2MCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MTkzNDgsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjE5NTQwLCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoxOTgyOCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MjAxMTYsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjIwMzA4LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoyMDU5NiwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MjA4ODQsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjIxMDc2LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoyMTM2NCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MjE2NTIsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjIxODQ0LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoyMjEzMiwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MjI0MjAsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjIyNjEyLCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoyMjkwMCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MjMxODgsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjIzMzgwLCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoyMzY2OCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MjM5NTYsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjI0MTQ4LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoyNDQzNiwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MjQ3MjQsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjI0OTE2LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoyNTIwNCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MjU0OTIsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjI1Njg0LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoyNTk3MiwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MjYyNjAsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjI2NDUyLCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoyNjc0MCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6MjcwMjgsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjI3MjIwLCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoyNzUwOCwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6Mjc3OTYsInRhcmdldCI6MzQ5NjJ9LHsiYnVmZmVyIjowLCJieXRlTGVuZ3RoIjoyODgsImJ5dGVPZmZzZXQiOjI3OTg4LCJ0YXJnZXQiOjM0OTYyfSx7ImJ1ZmZlciI6MCwiYnl0ZUxlbmd0aCI6Mjg4LCJieXRlT2Zmc2V0IjoyODI3NiwidGFyZ2V0IjozNDk2Mn0seyJidWZmZXIiOjAsImJ5dGVMZW5ndGgiOjE5MiwiYnl0ZU9mZnNldCI6Mjg1NjQsInRhcmdldCI6MzQ5NjJ9XSwiYnVmZmVycyI6W3siYnl0ZUxlbmd0aCI6Mjg3NTZ9XX0gICBUcAAAQklOAAAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAwD4AAAAAAAAAPgAAgD4AAMA+AACAPwAAID8AAAAAAABgPwAAgD4AACA/AACAPwAAwD4AAEA/AAAAPgAAAD8AAMA+AABAPwAAID8AAEA/AABgPwAAAD8AACA/AABAPwAAwD4AAIA+AADAPgAAgD4AAMA+AACAPgAAID8AAIA+AAAgPwAAgD4AACA/AACAPgAAwD4AAAA/AADAPgAAAD8AAMA+AAAAPwAAID8AAAA/AAAgPwAAAD8AACA/AAAAPwIABQALAAIACwAIAAYACQAVAAYAFQASABQAFwARABQAEQAOAAwADwADAAwAAwAAAAcAEwANAAcADQABABYACgAEABYABAAQAAAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAwD4AAAAAAAAAPgAAgD4AAMA+AACAPwAAID8AAAAAAABgPwAAgD4AACA/AACAPwAAwD4AAEA/AAAAPgAAAD8AAMA+AABAPwAAID8AAEA/AABgPwAAAD8AACA/AABAPwAAwD4AAIA+AADAPgAAgD4AAMA+AACAPgAAID8AAIA+AAAgPwAAgD4AACA/AACAPgAAwD4AAAA/AADAPgAAAD8AAMA+AAAAPwAAID8AAAA/AAAgPwAAAD8AACA/AAAAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAwD4AAAAAAAAAPgAAgD4AAMA+AACAPwAAID8AAAAAAABgPwAAgD4AACA/AACAPwAAwD4AAEA/AAAAPgAAAD8AAMA+AABAPwAAID8AAEA/AABgPwAAAD8AACA/AABAPwAAwD4AAIA+AADAPgAAgD4AAMA+AACAPgAAID8AAIA+AAAgPwAAgD4AACA/AACAPgAAwD4AAAA/AADAPgAAAD8AAMA+AAAAPwAAID8AAAA/AAAgPwAAAD8AACA/AAAAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAwD4AAAAAAAAAPgAAgD4AAMA+AACAPwAAID8AAAAAAABgPwAAgD4AACA/AACAPwAAwD4AAEA/AAAAPgAAAD8AAMA+AABAPwAAID8AAEA/AABgPwAAAD8AACA/AABAPwAAwD4AAIA+AADAPgAAgD4AAMA+AACAPgAAID8AAIA+AAAgPwAAgD4AACA/AACAPgAAwD4AAAA/AADAPgAAAD8AAMA+AAAAPwAAID8AAAA/AAAgPwAAAD8AACA/AAAAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAwD4AAAAAAAAAPgAAgD4AAMA+AACAPwAAID8AAAAAAABgPwAAgD4AACA/AACAPwAAwD4AAEA/AAAAPgAAAD8AAMA+AABAPwAAID8AAEA/AABgPwAAAD8AACA/AABAPwAAwD4AAIA+AADAPgAAgD4AAMA+AACAPgAAID8AAIA+AAAgPwAAgD4AACA/AACAPgAAwD4AAAA/AADAPgAAAD8AAMA+AAAAPwAAID8AAAA/AAAgPwAAAD8AACA/AAAAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAwD4AAAAAAAAAPgAAgD4AAMA+AACAPwAAID8AAAAAAABgPwAAgD4AACA/AACAPwAAwD4AAEA/AAAAPgAAAD8AAMA+AABAPwAAID8AAEA/AABgPwAAAD8AACA/AABAPwAAwD4AAIA+AADAPgAAgD4AAMA+AACAPgAAID8AAIA+AAAgPwAAgD4AACA/AACAPgAAwD4AAAA/AADAPgAAAD8AAMA+AAAAPwAAID8AAAA/AAAgPwAAAD8AACA/AAAAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAwD4AAAAAAAAAPgAAgD4AAMA+AACAPwAAID8AAAAAAABgPwAAgD4AACA/AACAPwAAwD4AAEA/AAAAPgAAAD8AAMA+AABAPwAAID8AAEA/AABgPwAAAD8AACA/AABAPwAAwD4AAIA+AADAPgAAgD4AAMA+AACAPgAAID8AAIA+AAAgPwAAgD4AACA/AACAPgAAwD4AAAA/AADAPgAAAD8AAMA+AAAAPwAAID8AAAA/AAAgPwAAAD8AACA/AAAAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAwD4AAAAAAAAAPgAAgD4AAMA+AACAPwAAID8AAAAAAABgPwAAgD4AACA/AACAPwAAwD4AAEA/AAAAPgAAAD8AAMA+AABAPwAAID8AAEA/AABgPwAAAD8AACA/AABAPwAAwD4AAIA+AADAPgAAgD4AAMA+AACAPgAAID8AAIA+AAAgPwAAgD4AACA/AACAPgAAwD4AAAA/AADAPgAAAD8AAMA+AAAAPwAAID8AAAA/AAAgPwAAAD8AACA/AAAAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAwD4AAAAAAAAAPgAAgD4AAMA+AACAPwAAID8AAAAAAABgPwAAgD4AACA/AACAPwAAwD4AAEA/AAAAPgAAAD8AAMA+AABAPwAAID8AAEA/AABgPwAAAD8AACA/AABAPwAAwD4AAIA+AADAPgAAgD4AAMA+AACAPgAAID8AAIA+AAAgPwAAgD4AACA/AACAPgAAwD4AAAA/AADAPgAAAD8AAMA+AAAAPwAAID8AAAA/AAAgPwAAAD8AACA/AAAAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAwD4AAAAAAAAAPgAAgD4AAMA+AACAPwAAID8AAAAAAABgPwAAgD4AACA/AACAPwAAwD4AAEA/AAAAPgAAAD8AAMA+AABAPwAAID8AAEA/AABgPwAAAD8AACA/AABAPwAAwD4AAIA+AADAPgAAgD4AAMA+AACAPgAAID8AAIA+AAAgPwAAgD4AACA/AACAPgAAwD4AAAA/AADAPgAAAD8AAMA+AAAAPwAAID8AAAA/AAAgPwAAAD8AACA/AAAAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAwD4AAAAAAAAAPgAAgD4AAMA+AACAPwAAID8AAAAAAABgPwAAgD4AACA/AACAPwAAwD4AAEA/AAAAPgAAAD8AAMA+AABAPwAAID8AAEA/AABgPwAAAD8AACA/AABAPwAAwD4AAIA+AADAPgAAgD4AAMA+AACAPgAAID8AAIA+AAAgPwAAgD4AACA/AACAPgAAwD4AAAA/AADAPgAAAD8AAMA+AAAAPwAAID8AAAA/AAAgPwAAAD8AACA/AAAAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgL8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAPwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIC/AAAAAAAAgD8AAAAAAAAAAAAAAAAAAAAAAACAvwAAAAAAAIA/AAAAAAAAgD8AAAAAAAAAAAAAwD4AAAAAAAAAPgAAgD4AAMA+AACAPwAAID8AAAAAAABgPwAAgD4AACA/AACAPwAAwD4AAEA/AAAAPgAAAD8AAMA+AABAPwAAID8AAEA/AABgPwAAAD8AACA/AABAPwAAwD4AAIA+AADAPgAAgD4AAMA+AACAPgAAID8AAIA+AAAgPwAAgD4AACA/AACAPgAAwD4AAAA/AADAPgAAAD8AAMA+AAAAPwAAID8AAAA/AAAgPwAAAD8AACA/AAAAPwAAjMIAAAAAAACMQgAAjEIAAAAAAACMQgAAjMIAAAAAAACMwgAAjEIAAAAAAACMwgAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AAAAAAAAAAAAAIA/AACAPwAAgD8AAAAAAAAAAAAAgD8AAAAAAAABAAMAAAADAAIAAAAgwQAAAAAAACBBAAAgQQAAAAAAACBBAAAgwQAAAAAAACDBAAAgQQAAAAAAACDBAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAAAAAAAAAAAAgD8AAIA/AACAPwAAAAAAAAAAAACAPwAAAAAAAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAvwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAPwAAgD8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAvwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIC/AACAPwAAgL8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAvwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAPwAAgD8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAvwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAIA/AACAPwAAgL8AAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIC/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgD8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAvwAAAAAAAIA/AAAAAAAAAAAAAAAAAAAAAAAAgL8AAAAAAACAPwAAAAAAAIA/AAAAAAAAAAAAAMA+AAAAAAAAAD4AAIA+AADAPgAAgD8AACA/AAAAAAAAYD8AAIA+AAAgPwAAgD8AAMA+AABAPwAAAD4AAAA/AADAPgAAQD8AACA/AABAPwAAYD8AAAA/AAAgPwAAQD8AAMA+AACAPgAAwD4AAIA+AADAPgAAgD4AACA/AACAPgAAID8AAIA+AAAgPwAAgD4AAMA+AAAAPwAAwD4AAAA/AADAPgAAAD8AACA/AAAAPwAAID8AAAA/AAAgPwAAAD8=" alt="نموذج الحرم الجامعي ثلاثي الأبعاد" style="min-height: 460px; width: 100%; height: 100%; display: none;" camera-orbit="35deg 60deg 145m" exposure="1.2" camera-controls auto-rotate shadow-intensity="1" ar></model-viewer>
+            
+            <!-- Canvas HUD Overlays -->
+            <div class="absolute top-3 right-3 bg-[#0B1020]/80 backdrop-blur border border-cyan-500/30 px-3 py-1.5 rounded-lg text-[11px] font-mono-tactical text-cyan-300 flex items-center gap-2">
+              <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+              <span>GRID-3D: 12 BLDGS | ACTIVE</span>
+            </div>
+
+            <!-- Compass Widget on Canvas -->
+            <div class="absolute bottom-3 right-3 bg-[#0B1020]/90 backdrop-blur border border-slate-700 px-3 py-2 rounded-xl flex items-center gap-3 text-xs">
+              <div class="relative w-8 h-8 rounded-full border border-cyan-500/50 flex items-center justify-center">
+                <i id="canvasCompassArrow" class="fa-solid fa-location-arrow text-cyan-400 text-sm transition-transform duration-200" style="transform: rotate(-45deg);"></i>
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-400">الاتجاه اللحظي</div>
+                <div id="canvasAzimuthLabel" class="font-mono-tactical font-bold text-cyan-300 text-xs">318° NW</div>
+              </div>
+            </div>
+
+            <!-- Drag Instruction Hint -->
+            <div class="absolute bottom-3 left-3 bg-[#0B1020]/80 backdrop-blur border border-slate-800 px-3 py-1.5 rounded-lg text-[11px] text-slate-400 flex items-center gap-1.5 pointer-events-none">
+              <i class="fa-solid fa-hand-pointer text-cyan-400"></i>
+              <span>اسحب للتدوير 360° | استخدم العجلة للتكبير</span>
+            </div>
+
+          </div>
+
+          <!-- Building Details & Quick Action Panel -->
+          <div class="lg:col-span-1 bg-[#0E1526] border border-slate-800 rounded-2xl p-4 flex flex-col justify-between shadow-xl">
+            <div class="space-y-4">
+              
+              <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <span class="text-xs font-mono-tactical text-cyan-400 uppercase tracking-widest">تفاصيل المبنى</span>
+                <span id="bldgIdBadge" class="bg-cyan-950 text-cyan-300 border border-cyan-500/40 text-[10px] font-mono-tactical px-2 py-0.5 rounded font-bold">BLDG-01</span>
+              </div>
+
+              <div>
+                <h3 id="bldgTitle" class="text-base font-bold text-white mb-1">مبنى 1</h3>
+                <p id="bldgDesc" class="text-xs text-slate-400 leading-relaxed">مبنى 1 في الحرم الجامعي</p>
+              </div>
+
+              <!-- Stats Grid -->
+              <div class="grid grid-cols-2 gap-2 text-xs">
+                <div class="bg-[#131C31] p-2.5 rounded-xl border border-slate-800">
+                  <div class="text-slate-400 text-[10px] mb-0.5">عدد الأدوار</div>
+                  <div id="bldgFloors" class="font-mono-tactical font-bold text-cyan-400 text-sm">4 أدوار</div>
+                </div>
+                <div class="bg-[#131C31] p-2.5 rounded-xl border border-slate-800">
+                  <div class="text-slate-400 text-[10px] mb-0.5">البوابات الذكية</div>
+                  <div id="bldgEntrances" class="font-mono-tactical font-bold text-emerald-400 text-sm">2 بوابات</div>
+                </div>
+                <div class="bg-[#131C31] p-2.5 rounded-xl border border-slate-800">
+                  <div class="text-slate-400 text-[10px] mb-0.5">كثافة الحشود</div>
+                  <div id="bldgCrowd" class="font-mono-tactical font-bold text-gold-400 text-amber-400 text-sm">42% متوسطة</div>
+                </div>
+                <div class="bg-[#131C31] p-2.5 rounded-xl border border-slate-800">
+                  <div class="text-slate-400 text-[10px] mb-0.5">توفير الطاقة IoT</div>
+                  <div id="bldgEnergy" class="font-mono-tactical font-bold text-emerald-400 text-sm">34% نشط</div>
+                </div>
+              </div>
+
+              <!-- Featured Target Hall in Building -->
+              <div class="bg-gradient-to-r from-cyan-950/40 to-blue-950/40 border border-cyan-500/30 rounded-xl p-3">
+                <div class="text-[10px] text-cyan-400 font-semibold mb-1">الهدف المميز الحالي:</div>
+                <div class="font-bold text-white text-xs mb-0.5" id="bldgFeaturedHallName">قاعة المؤتمرات الكبرى (#402)</div>
+                <div class="text-[11px] text-slate-400" id="bldgFeaturedHallDetail">الدور الرابع • السعة 250 مقعداً • متاح</div>
+              </div>
+
+            </div>
+
+            <!-- Action Button: Launch Aerial Drop & Navigate -->
+            <button onclick="launchAerialDropForCurrentBuilding()" class="w-full mt-4 bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-bold py-3 px-4 rounded-xl text-sm flex items-center justify-center gap-2 glow-cyan transition-all shadow-lg active:scale-98">
+              <i class="fa-solid fa-jet-fighter-up text-base"></i>
+              <span>هبوط تكتيكي وملاحة فورية</span>
+            </button>
+
+          </div>
+
+        </div>
+
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SCREEN 2: DIRECTORY SCREEN (دليل القاعات) -->
+      <!-- ============================================== -->
+      <div id="screen-directory" class="screen-view hidden h-full flex flex-col gap-4">
+        
+        <!-- Search & Filter Controls -->
+        <div class="bg-[#0E1526] border border-slate-800 rounded-xl p-3.5 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-md">
+          
+          <!-- Search Input Box -->
+          <div class="relative w-full sm:w-80">
+            <i class="fa-solid fa-magnifying-glass absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="text" id="dirSearchInput" oninput="filterHalls()" placeholder="ابحث برقم القاعة (مثلاً 402) أو التخصص..." class="w-full bg-[#141C30] border border-slate-700 focus:border-cyan-400 rounded-lg pr-9 pl-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none transition-colors">
+          </div>
+
+          <!-- Category Chips -->
+          <div class="flex items-center gap-1.5 flex-wrap w-full sm:w-auto">
+            <button onclick="setDirCategory('ALL')" class="dir-chip active bg-cyan-500 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition-all">الكل</button>
+            <button onclick="setDirCategory('CONFERENCES')" class="dir-chip bg-[#141C30] text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs transition-all">مؤتمرات</button>
+            <button onclick="setDirCategory('TECH_AI')" class="dir-chip bg-[#141C30] text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs transition-all">حاسب وذكاء اصطناعي</button>
+            <button onclick="setDirCategory('AUDITORIUMS')" class="dir-chip bg-[#141C30] text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs transition-all">مدرجات</button>
+            <button onclick="setDirCategory('FINANCE_ADMIN')" class="dir-chip bg-[#141C30] text-slate-300 hover:text-white px-3 py-1.5 rounded-lg text-xs transition-all">مالية وإدارة</button>
+          </div>
+
+        </div>
+
+        <!-- Halls Cards Grid -->
+        <div id="hallsContainer" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 overflow-y-auto max-h-[580px] p-1">
+          <!-- Dynamically populated via JS -->
+        </div>
+
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SCREEN 3: 3D INDOOR WALKTHROUGH (الملاحة 3D) -->
+      <!-- ============================================== -->
+      <div id="screen-walkthrough" class="screen-view hidden h-full flex flex-col gap-4">
+        
+        <!-- Walkthrough HUD Header -->
+        <div class="bg-[#0E1526] border border-cyan-500/30 rounded-xl p-3 flex flex-wrap items-center justify-between gap-3 shadow-md">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl bg-cyan-950 border border-cyan-500/40 flex items-center justify-center text-cyan-400 font-mono-tactical font-bold text-sm" id="walkHallCodeBadge">
+              #402
+            </div>
+            <div>
+              <div class="flex items-center gap-2">
+                <h3 class="font-bold text-white text-sm" id="walkHallTitle">قاعة الشيخ صالح الفهد للمؤتمرات</h3>
+                <span class="text-[10px] font-mono-tactical text-cyan-400 bg-cyan-950 px-2 py-0.5 rounded border border-cyan-500/30" id="walkFloorBadge">الدور 4</span>
+              </div>
+              <p class="text-xs text-slate-400" id="walkBuildingName">مبنى 1 - كلية الهندسة والعلوم التطبيقية</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-2">
+            <!-- Continuous Walk Toggle -->
+            <button onclick="toggleContinuousWalk()" id="walkSimBtn" class="flex items-center gap-2 bg-gradient-to-r from-emerald-600 to-teal-500 hover:from-emerald-500 hover:to-teal-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs glow-emerald transition-all shadow">
+              <i class="fa-solid fa-person-walking text-sm"></i>
+              <span id="walkSimBtnText">تشغيل محاكي المشي المستمر</span>
+            </button>
+
+            <!-- AR Camera Mode Toggle -->
+            <button onclick="toggleArMode()" id="arModeBtn" class="flex items-center gap-2 bg-[#141C30] hover:bg-[#1C2742] text-slate-300 border border-slate-700 px-3 py-1.5 rounded-lg text-xs transition-all">
+              <i class="fa-solid fa-camera text-xs"></i>
+              <span>وضع AR</span>
+            </button>
+
+            <!-- Speak Audio Instruction -->
+            <button onclick="speakCurrentStepAudio()" class="bg-[#141C30] hover:bg-cyan-950 text-cyan-400 border border-cyan-500/40 w-9 h-9 rounded-lg flex items-center justify-center text-sm transition-all" title="استمع للإرشاد الصوتي">
+              <i class="fa-solid fa-volume-high"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- 3D Corridor Perspective Canvas View -->
+        <div class="relative bg-[#070A12] border border-cyan-500/40 rounded-2xl overflow-hidden shadow-2xl flex flex-col h-[380px]">
+          <canvas id="corridorCanvas" class="w-full h-full flex-1"></canvas>
+          
+          <!-- Tactical HUD Corner Graphics -->
+          <div class="absolute top-3 right-3 bg-[#0B1020]/80 backdrop-blur border border-cyan-500/30 px-3 py-1.5 rounded-lg text-xs font-mono-tactical text-cyan-300 flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-cyan-400 animate-ping"></span>
+            <span>UWB TELEMETRY: LOCK ±0.35m</span>
+          </div>
+
+          <!-- AR Mode Simulation Overlay -->
+          <div id="arOverlay" class="absolute inset-0 pointer-events-none hidden bg-emerald-950/15 border-2 border-emerald-500/30 flex items-center justify-center">
+            <div class="w-48 h-48 border border-dashed border-emerald-400/50 rounded-full flex items-center justify-center animate-spin" style="animation-duration: 20s;">
+              <div class="w-32 h-32 border border-emerald-400/40 rounded-full"></div>
+            </div>
+            <div class="absolute bottom-4 bg-[#0B1020]/90 text-emerald-400 border border-emerald-500/40 px-3 py-1 rounded-full text-[11px] font-mono-tactical">
+              AR SCANNER: CORRIDOR DOORS DETECTED
+            </div>
+          </div>
+
+          <!-- Step Progression HUD Bar -->
+          <div class="absolute bottom-3 inset-x-3 bg-[#0B1020]/90 backdrop-blur border border-cyan-500/30 rounded-xl p-3 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-3 w-full sm:w-auto">
+              <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-300 font-bold" id="currentStepNumber">
+                3
+              </div>
+              <div>
+                <div class="text-[10px] text-slate-400 font-mono-tactical" id="stepStageLabel">المرحلة: ممر داخلي</div>
+                <div class="font-bold text-white text-xs" id="stepInstructionText">اسلك الممر الشرقي في الدور الرابع لمسافة 20م وتابع الأسهم النيونية</div>
+              </div>
+            </div>
+
+            <!-- Controls: Previous / Next Step -->
+            <div class="flex items-center gap-2 w-full sm:w-auto justify-end">
+              <button onclick="prevWalkStep()" class="bg-[#141C30] hover:bg-[#1C2742] text-slate-300 px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700 transition-all flex items-center gap-1">
+                <i class="fa-solid fa-arrow-right text-[10px]"></i>
+                <span>السابق</span>
+              </button>
+              <button onclick="nextWalkStep()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs transition-all flex items-center gap-1 glow-cyan">
+                <span>التالي</span>
+                <i class="fa-solid fa-arrow-left text-[10px]"></i>
+              </button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Step List Sequence Indicator -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2" id="stepsSequenceContainer">
+          <!-- Populated dynamically via JS -->
+        </div>
+
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SCREEN 4: AI TACTICAL ASSISTANT (المساعد الذكي) -->
+      <!-- ============================================== -->
+      <div id="screen-ai" class="screen-view hidden h-full flex flex-col gap-4 max-w-4xl mx-auto w-full">
+        
+        <!-- AI Mode Selector Tabs -->
+        <div class="bg-[#0E1526] border border-slate-800 rounded-xl p-2 flex items-center justify-between gap-2 shadow-md">
+          <button onclick="setAiMode('FAST_SEARCH')" class="ai-mode-tab active flex-1 bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 font-bold py-2 px-3 rounded-lg text-xs flex items-center justify-center gap-2 transition-all">
+            <i class="fa-solid fa-bolt text-xs"></i>
+            <span>Gemini 3.8 Flash (استعلام سريع)</span>
+          </button>
+          <button onclick="setAiMode('HIGH_THINKING')" class="ai-mode-tab flex-1 bg-[#141C30] border border-slate-700 text-slate-300 hover:text-white py-2 px-3 rounded-lg text-xs flex items-center justify-center gap-2 transition-all">
+            <i class="fa-solid fa-brain text-xs text-purple-400"></i>
+            <span>Argon 4 (تفكير عميق وتخطيط)</span>
+          </button>
+          <button onclick="setAiMode('VOICE_LIVE')" class="ai-mode-tab flex-1 bg-[#141C30] border border-slate-700 text-slate-300 hover:text-white py-2 px-3 rounded-lg text-xs flex items-center justify-center gap-2 transition-all">
+            <i class="fa-solid fa-microphone-lines text-xs text-emerald-400"></i>
+            <span>Live Voice + TTS (صوتي مباشر)</span>
+          </button>
+        </div>
+
+        <!-- Chat History Container -->
+        <div id="chatHistory" class="flex-1 bg-[#090D18] border border-slate-800 rounded-2xl p-4 overflow-y-auto min-h-[380px] max-h-[460px] flex flex-col gap-3 shadow-inner">
+          
+          <!-- Welcome Message -->
+          <div class="flex items-start gap-3 bg-[#10172B] border border-cyan-500/30 rounded-2xl p-3.5 max-w-[85%] self-start">
+            <div class="w-8 h-8 rounded-lg bg-cyan-500/20 border border-cyan-400/40 flex items-center justify-center text-cyan-400 text-xs shrink-0">
+              <i class="fa-solid fa-robot"></i>
+            </div>
+            <div>
+              <div class="flex items-center gap-2 mb-1">
+                <span class="font-bold text-white text-xs">المساعد التكتيكي الذكي (Gemini)</span>
+                <span class="text-[10px] font-mono-tactical text-cyan-400 bg-cyan-950 px-1.5 py-0.2 rounded border border-cyan-500/30">ONLINE</span>
+              </div>
+              <p class="text-xs text-slate-300 leading-relaxed">
+                مرحباً بك في نظام وجهني التكتيكي. أنا جاهز لإرشادك إلى أي قاعة، أو تقديم مسارات مخصصة للكراسي المتحركة، أو إطلاعك على جدول الفعاليات والمحاضرات الحية. كيف يمكنني مساعدتك؟
+              </p>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Quick Suggestions Chips -->
+        <div class="flex items-center gap-2 overflow-x-auto pb-1 text-xs">
+          <span class="text-slate-400 shrink-0 text-[11px]"><i class="fa-solid fa-wand-magic-sparkles text-cyan-400 ml-1"></i>اقتراحات:</span>
+          <button onclick="sendQuickPrompt('أين تقع قاعة المؤتمرات 402؟ وكيف أصل إليها؟')" class="bg-[#121B30] hover:bg-[#1A2644] border border-slate-700 text-slate-300 hover:text-cyan-300 px-3 py-1.5 rounded-full shrink-0 transition-all">أين قاعة المؤتمرات #402؟</button>
+          <button onclick="sendQuickPrompt('ابحث لي عن معمل الأمن السيبراني وموعده')" class="bg-[#121B30] hover:bg-[#1A2644] border border-slate-700 text-slate-300 hover:text-cyan-300 px-3 py-1.5 rounded-full shrink-0 transition-all">معمل الأمن السيبراني #315</button>
+          <button onclick="sendQuickPrompt('ما هو أسهل مسار للكراسي المتحركة إلى كلية الحاسبات؟')" class="bg-[#121B30] hover:bg-[#1A2644] border border-slate-700 text-slate-300 hover:text-cyan-300 px-3 py-1.5 rounded-full shrink-0 transition-all">مسار الكراسي المتحركة</button>
+        </div>
+
+        <!-- Message Input Box -->
+        <div class="bg-[#0E1526] border border-slate-800 rounded-xl p-2 flex items-center gap-2 shadow-lg">
+          <input type="text" id="aiUserInput" onkeydown="handleAiInputKey(event)" placeholder="اسأل المساعد التكتيكي عن أي قاعة أو مسار أو فعالية..." class="flex-1 bg-transparent px-3 py-2 text-xs text-white placeholder-slate-500 focus:outline-none">
+          <button onclick="simulateVoiceInput()" class="bg-[#141C30] hover:bg-cyan-950 text-slate-300 hover:text-cyan-400 w-9 h-9 rounded-lg flex items-center justify-center text-sm transition-all" title="تسجيل صوتي">
+            <i class="fa-solid fa-microphone"></i>
+          </button>
+          <button onclick="sendUserAiMessage()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-4 py-2 rounded-lg text-xs glow-cyan transition-all flex items-center gap-1.5">
+            <span>إرسال</span>
+            <i class="fa-solid fa-paper-plane text-[10px]"></i>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- ============================================== -->
+      <!-- SCREEN 5: FEASIBILITY & INSIGHTS (دراسة الجدوى) -->
+      <!-- ============================================== -->
+      <div id="screen-insights" class="screen-view hidden h-full flex flex-col gap-4">
+        
+        <!-- KPI Highlights Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          
+          <div class="bg-[#0E1526] border border-cyan-500/30 rounded-xl p-4 shadow-md flex items-center justify-between">
+            <div>
+              <div class="text-[11px] text-slate-400 mb-1">تقليص زمن الوصول</div>
+              <div class="font-mono-tactical text-2xl font-bold text-cyan-400">64%</div>
+              <div class="text-[10px] text-emerald-400 mt-1">توفير 14 دقيقة لكل طالب/يوم</div>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-cyan-950/60 border border-cyan-500/30 flex items-center justify-center text-cyan-400 text-xl">
+              <i class="fa-solid fa-stopwatch"></i>
+            </div>
+          </div>
+
+          <div class="bg-[#0E1526] border border-emerald-500/30 rounded-xl p-4 shadow-md flex items-center justify-between">
+            <div>
+              <div class="text-[11px] text-slate-400 mb-1">دقة التموضع الداخلي</div>
+              <div class="font-mono-tactical text-2xl font-bold text-emerald-400">±0.35m</div>
+              <div class="text-[10px] text-slate-400 mt-1">تقنية UWB + BLE Beacons</div>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-emerald-950/60 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl">
+              <i class="fa-solid fa-bullseye"></i>
+            </div>
+          </div>
+
+          <div class="bg-[#0E1526] border border-purple-500/30 rounded-xl p-4 shadow-md flex items-center justify-between">
+            <div>
+              <div class="text-[11px] text-slate-400 mb-1">كفاءة استهلاك الطاقة</div>
+              <div class="font-mono-tactical text-2xl font-bold text-purple-400">41%</div>
+              <div class="text-[10px] text-emerald-400 mt-1">إطفاء تلقائي للقاعات الشاغرة</div>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-purple-950/60 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xl">
+              <i class="fa-solid fa-leaf"></i>
+            </div>
+          </div>
+
+          <div class="bg-[#0E1526] border border-amber-500/30 rounded-xl p-4 shadow-md flex items-center justify-between">
+            <div>
+              <div class="text-[11px] text-slate-400 mb-1">تغطية الحرم الجامعي</div>
+              <div class="font-mono-tactical text-2xl font-bold text-amber-400">100%</div>
+              <div class="text-[10px] text-slate-400 mt-1">12 مبنى + 48 قاعة ومختبر</div>
+            </div>
+            <div class="w-12 h-12 rounded-xl bg-amber-950/60 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xl">
+              <i class="fa-solid fa-map-location-dot"></i>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Roadmap & Technical Feasibility Sections -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          
+          <!-- Roadmap Milestones -->
+          <div class="bg-[#0E1526] border border-slate-800 rounded-2xl p-4 shadow-lg">
+            <h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2 border-b border-slate-800 pb-2">
+              <i class="fa-solid fa-timeline text-cyan-400"></i>
+              <span>خارطة طريق نشر المنظومة التكتيكية</span>
+            </h3>
+
+            <div class="space-y-3">
+              <div class="bg-[#121929] border border-cyan-500/30 rounded-xl p-3 flex items-start gap-3">
+                <span class="w-6 h-6 rounded-full bg-cyan-500 text-slate-950 font-bold text-xs flex items-center justify-center shrink-0">1</span>
+                <div>
+                  <div class="font-bold text-white text-xs mb-0.5">المرحلة الأولى: إطلاق المحرك ثلاثي الأبعاد والرادار</div>
+                  <p class="text-[11px] text-slate-400">نمذجة الـ 12 مبنى ومسارات المشاة والتوجيه الداخلي للمؤتمرات.</p>
+                  <span class="inline-block mt-1 text-[10px] text-emerald-400 font-mono-tactical font-semibold">مكتمل ومنشور (RELEASED)</span>
+                </div>
+              </div>
+
+              <div class="bg-[#121929] border border-purple-500/30 rounded-xl p-3 flex items-start gap-3">
+                <span class="w-6 h-6 rounded-full bg-purple-500 text-slate-950 font-bold text-xs flex items-center justify-center shrink-0">2</span>
+                <div>
+                  <div class="font-bold text-white text-xs mb-0.5">المرحلة الثانية: دمج التوأم الرقمي ومستشعرات IoT الحية</div>
+                  <p class="text-[11px] text-slate-400">ربط أنظمة إدارة المباني BMS ومراقبة الحشود والتحكم بالتكييف الذكي.</p>
+                  <span class="inline-block mt-1 text-[10px] text-cyan-400 font-mono-tactical font-semibold">قيد الاختبار الميداني (BETA)</span>
+                </div>
+              </div>
+
+              <div class="bg-[#121929] border border-slate-800 rounded-xl p-3 flex items-start gap-3">
+                <span class="w-6 h-6 rounded-full bg-slate-700 text-slate-300 font-bold text-xs flex items-center justify-center shrink-0">3</span>
+                <div>
+                  <div class="font-bold text-white text-xs mb-0.5">المرحلة الثالثة: الروبوتات الميدانية ومرافقة الزوار الذاتية</div>
+                  <p class="text-[11px] text-slate-400">توجيه الروبوتات المساعدة لنقل الزوار وذوي الاحتياجات الخاصة للوجهة.</p>
+                  <span class="inline-block mt-1 text-[10px] text-slate-400 font-mono-tactical font-semibold">مجدول للربع القادم (ROADMAP)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ROI & University Impact -->
+          <div class="bg-[#0E1526] border border-slate-800 rounded-2xl p-4 shadow-lg flex flex-col justify-between">
+            <div>
+              <h3 class="font-bold text-white text-sm mb-3 flex items-center gap-2 border-b border-slate-800 pb-2">
+                <i class="fa-solid fa-chart-line text-emerald-400"></i>
+                <span>العائد الأكاديمي والاستثماري (ROI Impact)</span>
+              </h3>
+              
+              <ul class="space-y-2.5 text-xs text-slate-300">
+                <li class="flex items-start gap-2">
+                  <i class="fa-solid fa-circle-check text-emerald-400 text-xs mt-0.5"></i>
+                  <span><strong>صفر تيه وتأخير:</strong> القضاء التام على ارتباك الطلاب الجدد والزوار خلال أسابيع التهيئة والمؤتمرات.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <i class="fa-solid fa-circle-check text-emerald-400 text-xs mt-0.5"></i>
+                  <span><strong>شمولية رقمية كاملة:</strong> خيارات مخصصة لطلاب ذوي الإعاقة تضمن مسارات خالية تماماً من الدرج.</span>
+                </li>
+                <li class="flex items-start gap-2">
+                  <i class="fa-solid fa-circle-check text-emerald-400 text-xs mt-0.5"></i>
+                  <span><strong>أمان وإخلاء ذكي:</strong> توجيه الحشود لأقرب مخارج طوارئ عبر خوارزميات المسار التكتيكي الأسرع.</span>
+                </li>
+              </ul>
+            </div>
+
+            <!-- APK Direct Banner inside Insights -->
+            <div class="mt-4 bg-gradient-to-r from-cyan-950/60 to-emerald-950/60 border border-emerald-500/40 rounded-xl p-3 flex items-center justify-between">
+              <div>
+                <div class="font-bold text-white text-xs">هل ترغب بتجربة النسخة الأصلية على جوالك؟</div>
+                <div class="text-[11px] text-slate-400">ملف APK جاهز للتثبيت المباشر على نظام أندرويد</div>
+              </div>
+              <a href="Wajehni-Tactical-3D.apk" download class="bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs glow-emerald transition-all shrink-0">
+                تنزيل التطبيق
+              </a>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+
+  </main>
+
+  <!-- BOTTOM NAVIGATION BAR (Android Jetpack Compose Native Style) -->
+  <nav class="bg-[#0B0F19]/95 backdrop-blur border-t border-cyan-500/20 px-2 py-2 sticky bottom-0 z-40">
+    <div class="max-w-md mx-auto grid grid-cols-5 gap-1">
+      
+      <button onclick="switchTab('screen-campus3d', this)" class="nav-tab active flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-cyan-400 transition-all">
+        <i class="fa-solid fa-earth-americas text-base mb-1"></i>
+        <span class="text-[10px] font-bold">الحرم 3D</span>
+      </button>
+
+      <button onclick="switchTab('screen-directory', this)" class="nav-tab flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-400 hover:text-slate-200 transition-all">
+        <i class="fa-solid fa-book-bookmark text-base mb-1"></i>
+        <span class="text-[10px] font-bold">دليل القاعات</span>
+      </button>
+
+      <button onclick="switchTab('screen-walkthrough', this)" class="nav-tab flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-400 hover:text-slate-200 transition-all">
+        <i class="fa-solid fa-person-walking text-base mb-1"></i>
+        <span class="text-[10px] font-bold">الملاحة 3D</span>
+      </button>
+
+      <button onclick="switchTab('screen-ai', this)" class="nav-tab flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-400 hover:text-slate-200 transition-all">
+        <i class="fa-solid fa-brain text-base mb-1"></i>
+        <span class="text-[10px] font-bold">المساعد الذكي</span>
+      </button>
+
+      <button onclick="switchTab('screen-insights', this)" class="nav-tab flex flex-col items-center justify-center py-1.5 px-1 rounded-xl text-slate-400 hover:text-slate-200 transition-all">
+        <i class="fa-solid fa-chart-pie text-base mb-1"></i>
+        <span class="text-[10px] font-bold">دراسة الجدوى</span>
+      </button>
+
+    </div>
+  </nav>
+
+  <!-- ============================================== -->
+  <!-- MODAL 1: CINEMATIC AERIAL TACTICAL DROP -->
+  <!-- ============================================== -->
+  <div id="aerialDropModal" class="fixed inset-0 z-50 bg-[#070A12]/95 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="relative w-full max-w-lg bg-[#0B1020] border-2 border-cyan-400 rounded-3xl p-6 glow-cyan shadow-2xl flex flex-col items-center text-center">
+      
+      <!-- Top HUD Data -->
+      <div class="w-full flex items-center justify-between text-xs font-mono-tactical text-cyan-400 mb-4 border-b border-cyan-500/30 pb-2">
+        <span>AERIAL TACTICAL DROP</span>
+        <span>GPS: 24.7136° N, 46.6753° E</span>
+      </div>
+
+      <!-- Crosshairs Reticle Animation -->
+      <div class="relative w-44 h-44 rounded-full border-2 border-cyan-400/60 flex items-center justify-center my-3">
+        <div class="absolute inset-0 rounded-full border border-dashed border-cyan-400/40 animate-spin" style="animation-duration: 8s;"></div>
+        <div class="w-32 h-32 rounded-full border border-emerald-400/50 flex items-center justify-center">
+          <div class="w-20 h-20 rounded-full border-2 border-cyan-400 flex items-center justify-center">
+            <i class="fa-solid fa-crosshairs text-cyan-300 text-3xl animate-pulse"></i>
+          </div>
+        </div>
+        <!-- Laser target indicators -->
+        <div class="absolute -top-2 w-1 h-4 bg-cyan-400"></div>
+        <div class="absolute -bottom-2 w-1 h-4 bg-cyan-400"></div>
+        <div class="absolute -left-2 h-1 w-4 bg-cyan-400"></div>
+        <div class="absolute -right-2 h-1 w-4 bg-cyan-400"></div>
+      </div>
+
+      <!-- Live Altitude Counter -->
+      <div class="my-2">
+        <div class="text-xs text-slate-400 font-mono-tactical">الارتفاع التكتيكي (ALTITUDE)</div>
+        <div class="font-mono-tactical text-5xl font-black text-white tracking-widest my-1 text-glow-cyan">
+          <span id="aerialAltitudeNum">280</span> <span class="text-xl text-cyan-400">M</span>
+        </div>
+      </div>
+
+      <!-- Destination Target Info -->
+      <div class="bg-[#121929] border border-cyan-500/30 rounded-xl p-3 w-full my-3 text-xs">
+        <div class="text-slate-400">الوجهة المستهدفة:</div>
+        <div class="font-bold text-white text-sm" id="aerialTargetTitle">قاعة الشيخ صالح الفهد للمؤتمرات (#402)</div>
+        <div class="text-cyan-400 text-[11px]" id="aerialTargetBuilding">مبنى 1 (الدور 4)</div>
+      </div>
+
+      <!-- Skip Button -->
+      <button onclick="skipAerialDrop()" class="mt-2 text-xs text-slate-400 hover:text-cyan-300 transition-colors">
+        تخطي الأنيميشن والدخول للملاحة 3D مباشرة
+      </button>
+
+    </div>
+  </div>
+
+  <!-- ============================================== -->
+  <!-- MODAL 2: TACTICAL RADAR & LIVE COMPASS DIALOG -->
+  <!-- ============================================== -->
+  <div id="radarModal" class="fixed inset-0 z-50 bg-[#070A12]/90 backdrop-blur-md hidden flex items-center justify-center p-4">
+    <div class="relative w-full max-w-md bg-[#0B1020] border border-cyan-400 rounded-3xl p-5 glow-cyan shadow-2xl flex flex-col items-center">
+      
+      <div class="w-full flex items-center justify-between mb-3 border-b border-slate-800 pb-2">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-radar text-cyan-400"></i>
+          <h3 class="font-bold text-white text-sm">الرادار والبوصلة التكتيكية</h3>
+        </div>
+        <button onclick="toggleRadarModal()" class="text-slate-400 hover:text-white text-sm">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Rotating Radar Screen -->
+      <div class="relative w-64 h-64 rounded-full border-2 border-cyan-500/50 bg-[#060A14] flex items-center justify-center overflow-hidden my-2 shadow-inner">
+        <!-- Concentric Distance Rings -->
+        <div class="absolute w-48 h-48 rounded-full border border-cyan-500/20"></div>
+        <div class="absolute w-32 h-32 rounded-full border border-cyan-500/30"></div>
+        <div class="absolute w-16 h-16 rounded-full border border-cyan-500/40"></div>
+        
+        <!-- Radar Grid Crosshairs -->
+        <div class="absolute inset-x-0 h-[1px] bg-cyan-500/30"></div>
+        <div class="absolute inset-y-0 w-[1px] bg-cyan-500/30"></div>
+
+        <!-- Radar Sweep Cone -->
+        <div class="absolute inset-0 radar-sweep-arm" style="background: conic-gradient(from 0deg, transparent 0deg, transparent 300deg, rgba(0, 240, 255, 0.4) 360deg); border-radius: 50%;"></div>
+
+        <!-- Building Blips -->
+        <div class="absolute w-2 h-2 rounded-full bg-cyan-400 glow-cyan" style="top: 25%; left: 30%;" title="مبنى 1"></div>
+        <div class="absolute w-2 h-2 rounded-full bg-emerald-400 glow-emerald" style="top: 30%; right: 28%;" title="مبنى 2"></div>
+        <div class="absolute w-2 h-2 rounded-full bg-amber-400 glow-gold" style="bottom: 28%; left: 32%;" title="مبنى 3"></div>
+        <div class="absolute w-2 h-2 rounded-full bg-blue-400" style="bottom: 30%; right: 30%;" title="مبنى 4"></div>
+        <div class="absolute w-2.5 h-2.5 rounded-full bg-purple-400 animate-ping" style="top: 48%; left: 48%;" title="مبنى 5"></div>
+
+        <!-- Center User Position Beacon -->
+        <div class="relative z-10 w-4 h-4 rounded-full bg-cyan-400 border-2 border-white glow-cyan"></div>
+      </div>
+
+      <!-- Radar Telemetry Controls -->
+      <div class="w-full bg-[#121929] border border-slate-800 rounded-xl p-3 my-2 text-xs flex items-center justify-between">
+        <div>
+          <div class="text-slate-400 text-[10px]">الزاوية الحالية (Azimuth):</div>
+          <div class="font-mono-tactical text-cyan-300 font-bold" id="radarAzimuthDisplay">318° NW</div>
+        </div>
+        <div>
+          <div class="text-slate-400 text-[10px]">المسافة للهدف:</div>
+          <div class="font-mono-tactical text-emerald-400 font-bold" id="radarDistanceDisplay">65 متراً</div>
+        </div>
+        <button onclick="simulateRadarLock()" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-2.5 py-1 rounded text-xs transition-all">
+          إعادة توجيه
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC & 3D RENDERING ENGINE -->
+  <script>
+    /* ==============================================================
+       CAMPUS REPOSITORY DATA (12 Buildings & Halls)
+       ============================================================== */
+    const CAMPUS_BUILDINGS = [
+      { id: 1, title: "مبنى 1", official: "مبنى 1", floors: 4, entrances: 2, color: "#00F0FF", desc: "مبنى 1 في الحرم الجامعي", crowd: 42, energy: 34, x: -90, z: -70, w: 75, d: 55, h: 65, featuredHall: "قاعة الشيخ صالح الفهد (#402)" },
+      { id: 2, title: "مبنى 2", official: "مبنى 2", floors: 4, entrances: 2, color: "#00FF85", desc: "مبنى 2 في الحرم الجامعي", crowd: 55, energy: 41, x: 90, z: -65, w: 75, d: 55, h: 65, featuredHall: "معمل الأمن السيبراني (#315)" },
+      { id: 3, title: "مبنى 3", official: "مبنى 3", floors: 3, entrances: 2, color: "#FFB800", desc: "مبنى 3 في الحرم الجامعي", crowd: 38, energy: 29, x: -90, z: 75, w: 70, d: 52, h: 50, featuredHall: "قاعة المحاكاة المالية (#210)" },
+      { id: 4, title: "مبنى 4", official: "مبنى 4", floors: 2, entrances: 2, color: "#3B82F6", desc: "مبنى 4 في الحرم الجامعي", crowd: 24, energy: 48, x: 90, z: 75, w: 80, d: 55, h: 42, featuredHall: "قاعة البحث الرقمي (#105)" },
+      { id: 5, title: "مبنى 5", official: "مبنى 5", floors: 3, entrances: 3, color: "#A855F7", desc: "مبنى 5 في الحرم الجامعي", crowd: 31, energy: 39, x: 0, z: 5, w: 65, d: 60, h: 55, featuredHall: "مختبر النماذج الأولية (#201)" },
+      { id: 6, title: "مبنى 6", official: "مبنى 6", floors: 4, entrances: 2, color: "#06B6D4", desc: "مبنى 6 في الحرم الجامعي", crowd: 46, energy: 32, x: -170, z: -70, w: 65, d: 50, h: 60, featuredHall: "مختبر النانو المتقدم (#304)" },
+      { id: 7, title: "مبنى 7", official: "مبنى 7", floors: 5, entrances: 3, color: "#10B981", desc: "مبنى 7 في الحرم الجامعي", crowd: 62, energy: 37, x: 170, z: -65, w: 70, d: 55, h: 75, featuredHall: "مدرج ابن النفيس الطبي (#501)" },
+      { id: 8, title: "مبنى 8", official: "مبنى 8", floors: 3, entrances: 4, color: "#F59E0B", desc: "مبنى 8 في الحرم الجامعي", crowd: 58, energy: 28, x: -170, z: 75, w: 65, d: 50, h: 48, featuredHall: "صالة القبول المركزية (#101)" },
+      { id: 9, title: "مبنى 9", official: "مبنى 9", floors: 2, entrances: 4, color: "#EC4899", desc: "مبنى 9 في الحرم الجامعي", crowd: 20, energy: 45, x: 170, z: 75, w: 85, d: 65, h: 45, featuredHall: "المدرج الرئيسي الكبير (#100)" },
+      { id: 10, title: "مبنى 10", official: "مبنى 10", floors: 2, entrances: 2, color: "#6366F1", desc: "مبنى 10 في الحرم الجامعي", crowd: 35, energy: 30, x: -90, z: 165, w: 80, d: 60, h: 40, featuredHall: "الصالة المغطاة الرئيسية (#110)" },
+      { id: 11, title: "مبنى 11", official: "مبنى 11", floors: 3, entrances: 2, color: "#14B8A6", desc: "مبنى 11 في الحرم الجامعي", crowd: 22, energy: 65, x: 90, z: 165, w: 70, d: 50, h: 48, featuredHall: "مختبر الطاقة الشمسية (#220)" },
+      { id: 12, title: "مبنى 12", official: "مبنى 12", floors: 4, entrances: 2, color: "#8B5CF6", desc: "مبنى 12 في الحرم الجامعي", crowd: 40, energy: 42, x: 0, z: 160, w: 75, d: 55, h: 62, featuredHall: "مساحة العمل المشتركة (#301)" }
+    ];
+
+    const CAMPUS_HALLS = [
+      {
+        code: "#402",
+        raw: "402",
+        official: "قاعة الشيخ صالح الفهد للمؤتمرات",
+        buildingId: 1,
+        buildingName: "مبنى 1",
+        floor: 4,
+        floorLabel: "الدور الرابع",
+        capacity: "250 مقعداً",
+        category: "CONFERENCES",
+        available: true,
+        statusText: "متاح الآن (حجز فوري)",
+        speaker: "متاحة للحجز والندوات الهندسية",
+        topic: "ملتقى الهندسة التطبيقية والأنظمة الذكية",
+        accessible: true,
+        beacon: "BLE-ENG-402A",
+        steps: [
+          { index: 1, stage: "مسار خارجي", instruction: "الوصول إلى البوابة الشرقية لمبنى 1 (مسافة 35م)", voice: "ابدأ السير للأمام لمسافة خمسة وثلاثين متراً نحو البوابة الشرقية لمبنى واحد.", distance: 35 },
+          { index: 2, stage: "انتقال رأسي", instruction: "ركوب المصعد البانورامي رقم 1 للصعود إلى الدور الرابع", voice: "بعد عشرة أمتار، اتجه نحو المصعد البانورامي واصعد إلى الدور الرابع.", distance: 15 },
+          { index: 3, stage: "ممر داخلي", instruction: "السير في الممر الشرقي الفيروزي لمسافة 20م مع تتبع ليزر الأرضية", voice: "اسلك الممر الشرقي في الدور الرابع لمسافة عشرين متراً وتابع الأسهم النيونية المتدفقة.", distance: 20 },
+          { index: 4, stage: "نقطة الوصول", instruction: "الوصول إلى قاعة المؤتمرات #402 على يدك اليمنى", voice: "وصلت إلى وجهتك: قاعة المؤتمرات أربعمائة واثنين على يمينك مباشرة.", distance: 0 }
+        ]
+      },
+      {
+        code: "#315",
+        raw: "315",
+        official: "معمل الأمن السيبراني والتحقيق الجنائي الرقمي",
+        buildingId: 2,
+        buildingName: "مبنى 2",
+        floor: 3,
+        floorLabel: "الدور الثالث",
+        capacity: "45 محطة حوسبة",
+        category: "TECH_AI",
+        available: true,
+        statusText: "متاح الآن للتدريب الحر",
+        speaker: "د. خالد العصيمي",
+        topic: "ورشة كشف الثغرات والاختراق الأخلاقي المتقدم",
+        accessible: true,
+        beacon: "BLE-CS-315B",
+        steps: [
+          { index: 1, stage: "مسار خارجي", instruction: "العبور من الساحة الوسطى نحو المدخل الزجاجي لمبنى 2 (40م)", voice: "اعبر الساحة الوسطى نحو المدخل الزجاجي لمبنى اثنين.", distance: 40 },
+          { index: 2, stage: "انتقال رأسي", instruction: "استخدام السلالم المضيئة أو المصعد 2 إلى الدور الثالث", voice: "اصعد إلى الدور الثالث عبر المصعد أو السلم المضيء.", distance: 12 },
+          { index: 3, stage: "ممر داخلي", instruction: "الانعطاف يساراً في ممر الأمن السيبراني لمسافة 15م", voice: "انعطف يساراً في ممر الأمن السيبراني لمسافة خمسة عشر متراً.", distance: 15 },
+          { index: 4, stage: "نقطة الوصول", instruction: "الدخول إلى معمل 315 المزود بأنظمة التحقق البيومترية", voice: "وصلت إلى معمل الأمن السيبراني ثلاثمائة وخمسة عشر.", distance: 0 }
+        ]
+      },
+      {
+        code: "#101",
+        raw: "101",
+        official: "صالة القبول والتسجيل المركزية",
+        buildingId: 8,
+        buildingName: "مبنى 8",
+        floor: 0,
+        floorLabel: "الدور الأرضي",
+        capacity: "180 مقعداً",
+        category: "FINANCE_ADMIN",
+        available: true,
+        statusText: "متاح لخدمة المراجعين",
+        speaker: "فريق الإرشاد والتوجيه الأكاديمي",
+        topic: "إصدار البطاقات الجامعية ومعادلة المقررات",
+        accessible: true,
+        beacon: "BLE-REG-101",
+        steps: [
+          { index: 1, stage: "مسار خارجي", instruction: "الاتجاه إلى البوابة الغربية لمبنى 8 (25م)", voice: "اتجه إلى البوابة الغربية لمبنى ثمانية.", distance: 25 },
+          { index: 2, stage: "نقطة الوصول", instruction: "الدخول مباشرة إلى الصالة الكبرى في الدور الأرضي", voice: "ادخل مباشرة إلى الصالة الكبرى في الدور الأرضي.", distance: 5 }
+        ]
+      },
+      {
+        code: "#100",
+        raw: "100",
+        official: "المدرج الرئيسي الكبير للحرم الجامعي",
+        buildingId: 9,
+        buildingName: "مبنى 9",
+        floor: 0,
+        floorLabel: "الدور الأرضي",
+        capacity: "1200 مقعداً",
+        category: "AUDITORIUMS",
+        available: false,
+        statusText: "قيد الاستخدام: حفل تخرج",
+        speaker: "معالي مدير الجامعة",
+        topic: "الملتقى السنوي للابتكار والتميز الأكاديمي",
+        accessible: true,
+        beacon: "BLE-CONF-100",
+        steps: [
+          { index: 1, stage: "مسار خارجي", instruction: "الوصول للبوابة الاحتفالية الرئيسية لمبنى 9 (50م)", voice: "سر خمسين متراً نحو البوابة الرئيسية لمبنى تسعة.", distance: 50 },
+          { index: 2, stage: "نقطة الوصول", instruction: "الدخول للمدرج الرئيسي عبر البوابات 1 و 2", voice: "ادخل مباشرة للمدرج الرئيسي الكبير.", distance: 10 }
+        ]
+      },
+      {
+        code: "#210",
+        raw: "210",
+        official: "قاعة المحاكاة المالية وتداول الأسهم",
+        buildingId: 3,
+        buildingName: "مبنى 3",
+        floor: 2,
+        floorLabel: "الدور الثاني",
+        capacity: "60 مقعداً",
+        category: "FINANCE_ADMIN",
+        available: true,
+        statusText: "متاح الآن للتدريب",
+        speaker: "أ.د. سلطان المنصور",
+        topic: "محاكاة التداول المالي وسوق المشتقات الرقمية",
+        accessible: true,
+        beacon: "BLE-BIZ-210",
+        steps: [
+          { index: 1, stage: "مسار خارجي", instruction: "مدخل مبنى 3 الجنوبي (30م)", voice: "اتجه نحو مدخل مبنى ثلاثة الجنوبي.", distance: 30 },
+          { index: 2, stage: "انتقال رأسي", instruction: "الصعود للدور الثاني عبر المصعد الغربي", voice: "اصعد إلى الدور الثاني عبر المصعد.", distance: 15 },
+          { index: 3, stage: "نقطة الوصول", instruction: "الوصول لقاعة المحاكاة 210", voice: "وصلت لقاعة المحاكاة المالية مائتين وعشرة.", distance: 10 }
+        ]
+      },
+      {
+        code: "#201",
+        raw: "201",
+        official: "مختبر تصنيع النماذج الأولية السريعة (FabLab)",
+        buildingId: 5,
+        buildingName: "مبنى 5",
+        floor: 2,
+        floorLabel: "الدور الثاني",
+        capacity: "35 مصنعاً رقمياً",
+        category: "TECH_AI",
+        available: true,
+        statusText: "متاح لرواد الأعمال والطلاب",
+        speaker: "م. فهد التميمي",
+        topic: "الطباعة ثلاثية الأبعاد وقطع الليزر للنماذج الأولية",
+        accessible: true,
+        beacon: "BLE-INOV-201",
+        steps: [
+          { index: 1, stage: "مسار خارجي", instruction: "المدخل الرئيسي لمبنى 5 (20م)", voice: "اتجه إلى مدخل مبنى خمسة الأوسط.", distance: 20 },
+          { index: 2, stage: "انتقال رأسي", instruction: "الصعود للدور الثاني", voice: "اصعد إلى الدور الثاني عبر السلم البانورامي.", distance: 10 },
+          { index: 3, stage: "نقطة الوصول", instruction: "مختبر الفاب لاب 201 في الجناح الشمالي", voice: "وصلت لمختبر النماذج الأولية مائتين وواحد.", distance: 15 }
+        ]
+      }
+    ];
+
+    /* ==============================================================
+       APP STATE
+       ============================================================== */
+    let currentBuilding = CAMPUS_BUILDINGS[0];
+    let activeHall = CAMPUS_HALLS[0];
+    let selectedFloorFilter = null;
+    let showIotOverlay = true;
+    let wheelchairOnly = false;
+    let isVoiceMuted = false;
+    let bookedHallCodes = new Set();
+    let currentStepIndex = 2; // Default to step 3 in corridor
+    let isContinuousWalking = false;
+    let walkIntervalId = null;
+    let isArMode = false;
+    let corridorYaw = 0;
+    let corridorProgress = 0.45; // 0.0 to 1.0 within current step
+    let aerialAltitude = 280;
+    let aerialIntervalId = null;
+
+    /* Web Audio Sound Synthesizer */
+    let audioCtx = null;
+    function playTacticalBeep(freq = 880, type = 'sine', duration = 0.08) {
+      if (isVoiceMuted) return;
+      try {
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        gain.gain.setValueAtTime(0.12, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) {
+        console.warn("Audio Context init suppressed", e);
+      }
+    }
+
+    /* Speech Synthesis Helper */
+    function speakArabicText(text) {
+      if (isVoiceMuted || !('speechSynthesis' in window)) return;
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'ar-SA';
+        utterance.rate = 1.0;
+        utterance.pitch = 1.0;
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        console.warn("Speech synthesis error", e);
+      }
+    }
+
+    /* ==============================================================
+       CANVAS 1: 3D CAMPUS INTERACTIVE ENGINE
+       ============================================================== */
+    const campusCanvas = document.getElementById('campusCanvas');
+    const cCtx = campusCanvas.getContext('2d');
+    let camYaw = -0.55; // Radians
+    let camPitch = 0.65; // Radians
+    let camZoom = 1.0;
+    let isDragging = false;
+    let lastMouseX = 0;
+    let lastMouseY = 0;
+
+    function resizeCampusCanvas() {
+      const rect = campusCanvas.parentElement.getBoundingClientRect();
+      campusCanvas.width = rect.width;
+      campusCanvas.height = rect.height;
+      drawCampusScene();
+    }
+    window.addEventListener('resize', resizeCampusCanvas);
+
+    campusCanvas.addEventListener('mousedown', (e) => {
+      isDragging = true;
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+    });
+    window.addEventListener('mouseup', () => { isDragging = false; });
+    campusCanvas.addEventListener('mousemove', (e) => {
+      if (!isDragging) return;
+      const dx = e.clientX - lastMouseX;
+      const dy = e.clientY - lastMouseY;
+      camYaw += dx * 0.008;
+      camPitch = Math.max(0.2, Math.min(1.3, camPitch + dy * 0.008));
+      lastMouseX = e.clientX;
+      lastMouseY = e.clientY;
+      updateCompassHeading();
+      drawCampusScene();
+    });
+
+    campusCanvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      camZoom = Math.max(0.6, Math.min(2.0, camZoom - e.deltaY * 0.0015));
+      drawCampusScene();
+    }, { passive: false });
+
+    // Touch support for mobile phones
+    campusCanvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        isDragging = true;
+        lastMouseX = e.touches[0].clientX;
+        lastMouseY = e.touches[0].clientY;
+      }
+    });
+    campusCanvas.addEventListener('touchmove', (e) => {
+      if (!isDragging || e.touches.length !== 1) return;
+      const dx = e.touches[0].clientX - lastMouseX;
+      const dy = e.touches[0].clientY - lastMouseY;
+      camYaw += dx * 0.01;
+      camPitch = Math.max(0.2, Math.min(1.3, camPitch + dy * 0.01));
+      lastMouseX = e.touches[0].clientX;
+      lastMouseY = e.touches[0].clientY;
+      updateCompassHeading();
+      drawCampusScene();
+    });
+    campusCanvas.addEventListener('touchend', () => { isDragging = false; });
+
+    // Project 3D point (x, y, z) to 2D canvas coordinates
+    function project3D(x, y, z, cx, cy) {
+      // Rotate around Y axis (yaw)
+      const cosY = Math.cos(camYaw);
+      const sinY = Math.sin(camYaw);
+      const x1 = x * cosY - z * sinY;
+      const z1 = x * sinY + z * cosY;
+
+      // Rotate around X axis (pitch)
+      const cosP = Math.cos(camPitch);
+      const sinP = Math.sin(camPitch);
+      const y2 = y * cosP - z1 * sinP;
+      const z2 = y * sinP + z1 * cosP;
+
+      const scale = (350 / (350 + z2 * 0.35)) * camZoom;
+      return {
+        x: cx + x1 * scale,
+        y: cy - y2 * scale,
+        depth: z2
+      };
+    }
+
+    function drawCampusScene() {
+      if (!campusCanvas.width || !campusCanvas.height) return;
+      const w = campusCanvas.width;
+      const h = campusCanvas.height;
+      const cx = w / 2;
+      const cy = h / 2 + 30;
+
+      // Background clear
+      cCtx.fillStyle = '#080C16';
+      cCtx.fillRect(0, 0, w, h);
+
+      // Draw Ground Tactical Grid
+      cCtx.strokeStyle = 'rgba(0, 240, 255, 0.07)';
+      cCtx.lineWidth = 1;
+      const gridSize = 450;
+      const step = 45;
+
+      for (let i = -gridSize; i <= gridSize; i += step) {
+        const p1 = project3D(i, 0, -gridSize, cx, cy);
+        const p2 = project3D(i, 0, gridSize, cx, cy);
+        cCtx.beginPath();
+        cCtx.moveTo(p1.x, p1.y);
+        cCtx.lineTo(p2.x, p2.y);
+        cCtx.stroke();
+
+        const p3 = project3D(-gridSize, 0, i, cx, cy);
+        const p4 = project3D(gridSize, 0, i, cx, cy);
+        cCtx.beginPath();
+        cCtx.moveTo(p3.x, p3.y);
+        cCtx.lineTo(p4.x, p4.y);
+        cCtx.stroke();
+      }
+
+      // Draw Pedestrian Pathways between buildings
+      cCtx.strokeStyle = wheelchairOnly ? 'rgba(0, 255, 133, 0.5)' : 'rgba(0, 240, 255, 0.35)';
+      cCtx.lineWidth = wheelchairOnly ? 3 : 2;
+      cCtx.setLineDash([6, 4]);
+
+      // Connect central hub to perimeter buildings
+      CAMPUS_BUILDINGS.forEach((b) => {
+        const center = project3D(0, 2, 5, cx, cy);
+        const bPos = project3D(b.x, 2, b.z, cx, cy);
+        cCtx.beginPath();
+        cCtx.moveTo(center.x, center.y);
+        cCtx.lineTo(bPos.x, bPos.y);
+        cCtx.stroke();
+      });
+      cCtx.setLineDash([]);
+
+      // Sort buildings by depth for proper painter's algorithm rendering
+      const sorted = [...CAMPUS_BUILDINGS].sort((a, b) => {
+        const az = a.x * Math.sin(camYaw) + a.z * Math.cos(camYaw);
+        const bz = b.x * Math.sin(camYaw) + b.z * Math.cos(camYaw);
+        return az - bz; // Far to near
+      });
+
+      // Render Each 3D Building Box
+      sorted.forEach((b) => {
+        drawBuilding3D(b, cx, cy);
+      });
+    }
+
+    function drawBuilding3D(b, cx, cy) {
+      const isSelected = currentBuilding.id === b.id;
+      const hw = b.w / 2;
+      const hd = b.d / 2;
+      
+      // Determine effective building height based on floor filter
+      let effectiveHeight = b.h;
+      if (selectedFloorFilter !== null) {
+        effectiveHeight = (selectedFloorFilter + 1) * (b.h / b.floors);
+      }
+
+      // 8 Vertices of the 3D cuboid
+      const v = [
+        project3D(b.x - hw, 0, b.z - hd, cx, cy),                 // 0: Bottom-rear-left
+        project3D(b.x + hw, 0, b.z - hd, cx, cy),                 // 1: Bottom-rear-right
+        project3D(b.x + hw, 0, b.z + hd, cx, cy),                 // 2: Bottom-front-right
+        project3D(b.x - hw, 0, b.z + hd, cx, cy),                 // 3: Bottom-front-left
+        project3D(b.x - hw, effectiveHeight, b.z - hd, cx, cy),   // 4: Top-rear-left
+        project3D(b.x + hw, effectiveHeight, b.z - hd, cx, cy),   // 5: Top-rear-right
+        project3D(b.x + hw, effectiveHeight, b.z + hd, cx, cy),   // 6: Top-front-right
+        project3D(b.x - hw, effectiveHeight, b.z + hd, cx, cy)    // 7: Top-front-left
+      ];
+
+      // Roof polygon (4, 5, 6, 7)
+      cCtx.beginPath();
+      cCtx.moveTo(v[4].x, v[4].y);
+      cCtx.lineTo(v[5].x, v[5].y);
+      cCtx.lineTo(v[6].x, v[6].y);
+      cCtx.lineTo(v[7].x, v[7].y);
+      cCtx.closePath();
+      cCtx.fillStyle = isSelected ? 'rgba(0, 240, 255, 0.45)' : 'rgba(20, 32, 54, 0.9)';
+      cCtx.fill();
+      cCtx.strokeStyle = isSelected ? '#00F0FF' : b.color;
+      cCtx.lineWidth = isSelected ? 2.5 : 1.2;
+      cCtx.stroke();
+
+      // Front / Side Faces
+      const faces = [
+        [3, 2, 6, 7], // Front
+        [2, 1, 5, 6], // Right
+        [0, 3, 7, 4], // Left
+      ];
+
+      faces.forEach(face => {
+        cCtx.beginPath();
+        cCtx.moveTo(v[face[0]].x, v[face[0]].y);
+        cCtx.lineTo(v[face[1]].x, v[face[1]].y);
+        cCtx.lineTo(v[face[2]].x, v[face[2]].y);
+        cCtx.lineTo(v[face[3]].x, v[face[3]].y);
+        cCtx.closePath();
+        cCtx.fillStyle = isSelected ? 'rgba(0, 180, 240, 0.25)' : 'rgba(12, 20, 36, 0.85)';
+        cCtx.fill();
+        cCtx.strokeStyle = isSelected ? 'rgba(0, 240, 255, 0.7)' : 'rgba(40, 60, 95, 0.6)';
+        cCtx.lineWidth = 1;
+        cCtx.stroke();
+      });
+
+      // Roof Beacon / IoT Signal Pulse
+      if (showIotOverlay) {
+        const topCenter = project3D(b.x, effectiveHeight + 6, b.z, cx, cy);
+        cCtx.beginPath();
+        cCtx.arc(topCenter.x, topCenter.y, isSelected ? 6 : 4, 0, Math.PI * 2);
+        cCtx.fillStyle = b.color;
+        cCtx.fill();
+
+        // Pulsing ring
+        cCtx.beginPath();
+        cCtx.arc(topCenter.x, topCenter.y, isSelected ? 12 : 8, 0, Math.PI * 2);
+        cCtx.strokeStyle = b.color;
+        cCtx.lineWidth = 1;
+        cCtx.stroke();
+      }
+
+      // Building Label on Canvas
+      const labelPos = project3D(b.x, effectiveHeight + 14, b.z, cx, cy);
+      cCtx.fillStyle = isSelected ? '#00F0FF' : '#E2E8F0';
+      cCtx.font = isSelected ? 'bold 11px Tajawal, sans-serif' : '10px Tajawal, sans-serif';
+      cCtx.textAlign = 'center';
+      cCtx.fillText(b.title, labelPos.x, labelPos.y);
+
+      // Occupancy Badge if IoT is enabled
+      if (showIotOverlay) {
+        cCtx.fillStyle = b.crowd > 50 ? '#F59E0B' : '#00FF85';
+        cCtx.font = '9px monospace';
+        cCtx.fillText(`${b.crowd}% حشود`, labelPos.x, labelPos.y + 11);
+      }
+    }
+
+    // Click Detection on Campus Buildings
+    campusCanvas.addEventListener('click', (e) => {
+      const rect = campusCanvas.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+      const cx = campusCanvas.width / 2;
+      const cy = campusCanvas.height / 2 + 30;
+
+      for (const b of CAMPUS_BUILDINGS) {
+        const top = project3D(b.x, b.h / 2, b.z, cx, cy);
+        const dist = Math.hypot(clickX - top.x, clickY - top.y);
+        if (dist < 40) {
+          selectBuilding(b);
+          playTacticalBeep(700, 'triangle', 0.06);
+          break;
+        }
+      }
+    });
+
+    function selectBuilding(b) {
+      currentBuilding = b;
+      document.getElementById('bldgIdBadge').textContent = `BLDG-0${b.id}`;
+      document.getElementById('bldgTitle').textContent = b.official;
+      document.getElementById('bldgDesc').textContent = b.desc;
+      document.getElementById('bldgFloors').textContent = `${b.floors} أدوار`;
+      document.getElementById('bldgEntrances').textContent = `${b.entrances} بوابات`;
+      document.getElementById('bldgCrowd').textContent = `${b.crowd}% ${b.crowd > 50 ? 'عالية' : 'معتدلة'}`;
+      document.getElementById('bldgEnergy').textContent = `${b.energy}% نشط`;
+      document.getElementById('bldgFeaturedHallName').textContent = b.featuredHall;
+      
+      // Update banner notification
+      updateBanner(`تم تحديد: ${b.official} | انقر فوق "هبوط تكتيكي" لبدء التجربة الملاحية.`);
+      drawCampusScene();
+    }
+
+    function updateCompassHeading() {
+      // Calculate azimuth based on camYaw
+      let deg = Math.round((-camYaw * (180 / Math.PI)) % 360);
+      if (deg < 0) deg += 360;
+      
+      const directions = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW'];
+      const dirIndex = Math.round(deg / 45) % 8;
+      const label = `${deg}° ${directions[dirIndex]}`;
+
+      document.getElementById('headerAzimuth').textContent = label;
+      document.getElementById('canvasAzimuthLabel').textContent = label;
+      document.getElementById('radarAzimuthDisplay').textContent = label;
+      document.getElementById('canvasCompassArrow').style.transform = `rotate(${deg - 45}deg)`;
+    }
+
+    function reset3DCamera() {
+      camYaw = -0.55;
+      camPitch = 0.65;
+      camZoom = 1.0;
+      updateCompassHeading();
+      drawCampusScene();
+      playTacticalBeep(600, 'sine', 0.05);
+    }
+
+    function setFloorFilter(floor) {
+      selectedFloorFilter = floor;
+      document.querySelectorAll('.floor-chip').forEach(c => c.classList.remove('active', 'bg-cyan-500', 'text-slate-950', 'font-bold'));
+      const activeBtn = event.target;
+      activeBtn.classList.add('active', 'bg-cyan-500', 'text-slate-950', 'font-bold');
+      drawCampusScene();
+      playTacticalBeep(750, 'sine', 0.04);
+    }
+
+    function toggleIotOverlay() {
+      showIotOverlay = !showIotOverlay;
+      const btn = document.getElementById('iotToggleBtn');
+      if (showIotOverlay) {
+        btn.classList.add('text-cyan-300', 'border-cyan-500/40');
+        btn.classList.remove('text-slate-400', 'border-slate-700');
+      } else {
+        btn.classList.remove('text-cyan-300', 'border-cyan-500/40');
+        btn.classList.add('text-slate-400', 'border-slate-700');
+      }
+      drawCampusScene();
+      playTacticalBeep(850, 'sine', 0.04);
+    }
+
+    function toggleWheelchairMode() {
+      wheelchairOnly = !wheelchairOnly;
+      const btn = document.getElementById('wheelchairToggleBtn');
+      if (wheelchairOnly) {
+        btn.classList.add('text-emerald-400', 'border-emerald-500/40', 'glow-emerald');
+        btn.classList.remove('text-slate-300', 'border-slate-700');
+        updateBanner("تم تفعيل فلتر مسارات الكراسي المتحركة: جميع المسارات الموضحة خالية تماماً من الدرج.");
+      } else {
+        btn.classList.remove('text-emerald-400', 'border-emerald-500/40', 'glow-emerald');
+        btn.classList.add('text-slate-300', 'border-slate-700');
+        updateBanner("تم إلغاء فلتر مسارات الكراسي المتحركة.");
+      }
+      drawCampusScene();
+      playTacticalBeep(800, 'sine', 0.04);
+    }
+
+    let isGlbModelActive = false;
+    function toggleGlbModelView() {
+      isGlbModelActive = !isGlbModelActive;
+      const canvas = document.getElementById('campusCanvas');
+      const glbViewer = document.getElementById('glbCampusViewer');
+      const btn = document.getElementById('glbToggleBtn');
+      if (isGlbModelActive) {
+        canvas.style.display = 'none';
+        glbViewer.style.display = 'block';
+        btn.classList.add('bg-amber-500', 'text-slate-950', 'glow-gold');
+        btn.classList.remove('bg-[#121B30]', 'text-amber-300');
+        updateBanner("تم تفعيل عرض نموذج الحرم الجامعي الواقعي ثلاثي الأبعاد (college_campus.glb).");
+        playTacticalBeep(950, 'sine', 0.08);
+      } else {
+        canvas.style.display = 'block';
+        glbViewer.style.display = 'none';
+        btn.classList.remove('bg-amber-500', 'text-slate-950', 'glow-gold');
+        btn.classList.add('bg-[#121B30]', 'text-amber-300');
+        updateBanner("تمت العودة إلى محرك الرادار التكتيكي ثلاثي الأبعاد.");
+        resizeCampusCanvas();
+        playTacticalBeep(800, 'sine', 0.05);
+      }
+    }
+
+    /* ==============================================================
+       CANVAS 2: FIRST-PERSON 3D INDOOR WALKTHROUGH ENGINE
+       ============================================================== */
+    const corridorCanvas = document.getElementById('corridorCanvas');
+    const walkCtx = corridorCanvas.getContext('2d');
+    let walkAnimFrameId = null;
+
+    function resizeCorridorCanvas() {
+      const rect = corridorCanvas.parentElement.getBoundingClientRect();
+      corridorCanvas.width = rect.width;
+      corridorCanvas.height = rect.height;
+      drawCorridorWalkthrough();
+    }
+    window.addEventListener('resize', resizeCorridorCanvas);
+
+    function drawCorridorWalkthrough() {
+      if (!corridorCanvas.width || !corridorCanvas.height) return;
+      const w = corridorCanvas.width;
+      const h = corridorCanvas.height;
+      const cx = w / 2 + corridorYaw * 60;
+      const cy = h / 2;
+
+      // Dark Tactical Ceiling & Floor
+      walkCtx.fillStyle = '#060911';
+      walkCtx.fillRect(0, 0, w, cy); // Ceiling
+      walkCtx.fillStyle = '#090D18';
+      walkCtx.fillRect(0, cy, w, h - cy); // Floor
+
+      // Perspective Corridor Walls (Vanishing Point: cx, cy)
+      const corridorW = w * 0.22;
+      const corridorH = h * 0.32;
+
+      // Left Wall
+      walkCtx.fillStyle = '#0C1322';
+      walkCtx.beginPath();
+      walkCtx.moveTo(0, 0);
+      walkCtx.lineTo(cx - corridorW, cy - corridorH);
+      walkCtx.lineTo(cx - corridorW, cy + corridorH);
+      walkCtx.lineTo(0, h);
+      walkCtx.closePath();
+      walkCtx.fill();
+      walkCtx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
+      walkCtx.stroke();
+
+      // Right Wall
+      walkCtx.fillStyle = '#0E1729';
+      walkCtx.beginPath();
+      walkCtx.moveTo(w, 0);
+      walkCtx.lineTo(cx + corridorW, cy - corridorH);
+      walkCtx.lineTo(cx + corridorW, cy + corridorH);
+      walkCtx.lineTo(w, h);
+      walkCtx.closePath();
+      walkCtx.fill();
+      walkCtx.strokeStyle = 'rgba(0, 240, 255, 0.25)';
+      walkCtx.stroke();
+
+      // Back Wall at Vanishing Point
+      walkCtx.fillStyle = '#070C16';
+      walkCtx.fillRect(cx - corridorW, cy - corridorH, corridorW * 2, corridorH * 2);
+      walkCtx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+      walkCtx.strokeRect(cx - corridorW, cy - corridorH, corridorW * 2, corridorH * 2);
+
+      // Wall Doorways along the corridor (Side Doors)
+      drawWallDoor(walkCtx, 0.3, true, cx, cy, w, h, "#400", false);
+      drawWallDoor(walkCtx, 0.65, true, cx, cy, w, h, "#401", false);
+      drawWallDoor(walkCtx, 0.55, false, cx, cy, w, h, "#402", true); // Target Hall on right!
+
+      // Flowing Neon Floor Guidance Ribbon / Arrows
+      drawFloorLaserRibbon(walkCtx, cx, cy, w, h);
+
+      // Recessed Ceiling Tactical LED Lights
+      for (let z = 0.2; z <= 0.9; z += 0.22) {
+        const topY = cy - corridorH * z - (1 - z) * (cy - corridorH);
+        const lightW = (corridorW * z + (1 - z) * (w / 2)) * 0.4;
+        walkCtx.fillStyle = 'rgba(0, 240, 255, 0.25)';
+        walkCtx.fillRect(cx - lightW / 2, topY, lightW, 3);
+      }
+    }
+
+    function drawWallDoor(ctx, depthRatio, isLeft, cx, cy, w, h, doorLabel, isTarget) {
+      const topY = cy - (h * 0.35) * (1 - depthRatio * 0.4);
+      const botY = cy + (h * 0.35) * (1 - depthRatio * 0.4);
+      const wallX = isLeft ? w * 0.15 * (1 - depthRatio) + (cx - w * 0.22) * depthRatio : w * 0.85 * (1 - depthRatio) + (cx + w * 0.22) * depthRatio;
+      const doorW = 28 * (1 - depthRatio * 0.5);
+
+      ctx.fillStyle = isTarget ? 'rgba(0, 240, 255, 0.15)' : 'rgba(15, 23, 42, 0.9)';
+      ctx.strokeStyle = isTarget ? '#00F0FF' : 'rgba(71, 85, 105, 0.6)';
+      ctx.lineWidth = isTarget ? 2 : 1;
+
+      const doorLeft = isLeft ? wallX : wallX - doorW;
+      ctx.fillRect(doorLeft, topY + 15, doorW, botY - topY - 15);
+      ctx.strokeRect(doorLeft, topY + 15, doorW, botY - topY - 15);
+
+      // Glowing Door Label
+      ctx.fillStyle = isTarget ? '#00F0FF' : '#94A3B8';
+      ctx.font = isTarget ? 'bold 11px monospace' : '9px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText(doorLabel, doorLeft + doorW / 2, topY + 10);
+
+      if (isTarget) {
+        // Target Arrival Reticle Indicator
+        ctx.strokeStyle = '#00FF85';
+        ctx.beginPath();
+        ctx.arc(doorLeft + doorW / 2, (topY + botY) / 2, 8, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    function drawFloorLaserRibbon(ctx, cx, cy, w, h) {
+      ctx.save();
+      ctx.strokeStyle = '#00F0FF';
+      ctx.lineWidth = 3;
+      ctx.shadowColor = '#00F0FF';
+      ctx.shadowBlur = 10;
+
+      // Ground centerline
+      ctx.beginPath();
+      ctx.moveTo(cx, cy + h * 0.18);
+      ctx.lineTo(w / 2, h);
+      ctx.stroke();
+
+      // Animated Chevron Arrows flowing forward
+      const arrowCount = 5;
+      for (let i = 0; i < arrowCount; i++) {
+        const offset = (corridorProgress + i / arrowCount) % 1.0;
+        const arrowY = cy + h * 0.18 + offset * (h - (cy + h * 0.18));
+        const arrowW = 12 + offset * 32;
+
+        ctx.strokeStyle = `rgba(0, 240, 255, ${offset * 0.85})`;
+        ctx.lineWidth = 2 + offset * 2;
+        ctx.beginPath();
+        ctx.moveTo(w / 2 - arrowW / 2, arrowY + 8);
+        ctx.lineTo(w / 2, arrowY);
+        ctx.lineTo(w / 2 + arrowW / 2, arrowY + 8);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function updateWalkStepUI() {
+      const step = activeHall.steps[currentStepIndex] || activeHall.steps[0];
+      document.getElementById('currentStepNumber').textContent = step.index;
+      document.getElementById('stepStageLabel').textContent = `المرحلة: ${step.stage}`;
+      document.getElementById('stepInstructionText').textContent = step.instruction;
+      
+      // Update Step Sequence Chips
+      const container = document.getElementById('stepsSequenceContainer');
+      container.innerHTML = activeHall.steps.map((s, idx) => `
+        <button onclick="jumpToWalkStep(${idx})" class="p-2 rounded-xl text-xs text-right border transition-all ${
+          idx === currentStepIndex
+            ? 'bg-cyan-950/80 border-cyan-400 text-cyan-300 glow-cyan'
+            : idx < currentStepIndex
+            ? 'bg-[#0E1526] border-emerald-500/40 text-emerald-400'
+            : 'bg-[#0E1526] border-slate-800 text-slate-400'
+        }">
+          <div class="font-bold flex items-center justify-between">
+            <span>خطوة ${s.index}</span>
+            <span class="text-[10px] font-mono-tactical">${s.distance > 0 ? s.distance + 'م' : 'وصول'}</span>
+          </div>
+          <div class="text-[10px] truncate text-slate-300 mt-0.5">${s.stage}</div>
+        </button>
+      `).join('');
+
+      drawCorridorWalkthrough();
+    }
+
+    function nextWalkStep() {
+      if (currentStepIndex < activeHall.steps.length - 1) {
+        currentStepIndex++;
+        corridorProgress = 0;
+        updateWalkStepUI();
+        speakCurrentStepAudio();
+        playTacticalBeep(920, 'sine', 0.06);
+      } else {
+        updateBanner("تهانينا! لقد وصلت إلى وجهتك المستهدفة بنجاح.");
+        playTacticalBeep(1200, 'sine', 0.15);
+      }
+    }
+
+    function prevWalkStep() {
+      if (currentStepIndex > 0) {
+        currentStepIndex--;
+        corridorProgress = 0;
+        updateWalkStepUI();
+        speakCurrentStepAudio();
+        playTacticalBeep(700, 'sine', 0.05);
+      }
+    }
+
+    function jumpToWalkStep(idx) {
+      currentStepIndex = idx;
+      corridorProgress = 0;
+      updateWalkStepUI();
+      speakCurrentStepAudio();
+      playTacticalBeep(850, 'sine', 0.05);
+    }
+
+    function toggleContinuousWalk() {
+      isContinuousWalking = !isContinuousWalking;
+      const btn = document.getElementById('walkSimBtn');
+      const text = document.getElementById('walkSimBtnText');
+      if (isContinuousWalking) {
+        btn.classList.add('glow-emerald');
+        text.textContent = "إيقاف محاكي المشي";
+        walkIntervalId = setInterval(() => {
+          corridorProgress += 0.04;
+          if (corridorProgress >= 1.0) {
+            corridorProgress = 0;
+            if (currentStepIndex < activeHall.steps.length - 1) {
+              currentStepIndex++;
+              updateWalkStepUI();
+              speakCurrentStepAudio();
+            } else {
+              toggleContinuousWalk();
+            }
+          }
+          drawCorridorWalkthrough();
+          playTacticalBeep(400, 'sine', 0.02); // Footstep audio simulation
+        }, 80);
+      } else {
+        clearInterval(walkIntervalId);
+        text.textContent = "تشغيل محاكي المشي المستمر";
+      }
+    }
+
+    function toggleArMode() {
+      isArMode = !isArMode;
+      const overlay = document.getElementById('arOverlay');
+      const btn = document.getElementById('arModeBtn');
+      if (isArMode) {
+        overlay.classList.remove('hidden');
+        btn.classList.add('text-emerald-400', 'border-emerald-500/50');
+        playTacticalBeep(980, 'sine', 0.08);
+      } else {
+        overlay.classList.add('hidden');
+        btn.classList.remove('text-emerald-400', 'border-emerald-500/50');
+      }
+    }
+
+    function speakCurrentStepAudio() {
+      const step = activeHall.steps[currentStepIndex] || activeHall.steps[0];
+      speakArabicText(step.voice);
+    }
+
+    /* ==============================================================
+       SCREEN 2: DIRECTORY RENDERING & BOOKING
+       ============================================================== */
+    let currentDirCategory = 'ALL';
+
+    function renderHallsDirectory() {
+      const container = document.getElementById('hallsContainer');
+      const query = document.getElementById('dirSearchInput').value.trim().toLowerCase();
+
+      const filtered = CAMPUS_HALLS.filter(hall => {
+        const matchesCat = currentDirCategory === 'ALL' || hall.category === currentDirCategory;
+        const matchesQuery = !query || 
+          hall.raw.toLowerCase().includes(query) || 
+          hall.official.toLowerCase().includes(query) || 
+          hall.topic.toLowerCase().includes(query) ||
+          hall.speaker.toLowerCase().includes(query);
+        return matchesCat && matchesQuery;
+      });
+
+      if (filtered.length === 0) {
+        container.innerHTML = `
+          <div class="col-span-full py-12 text-center text-slate-400">
+            <i class="fa-solid fa-search text-3xl mb-2 text-slate-600"></i>
+            <p>لا توجد قاعات مطابقة لبحثك</p>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = filtered.map(hall => {
+        const isBooked = bookedHallCodes.has(hall.code);
+        return `
+          <div class="bg-[#0E1526] border ${hall.code === activeHall.code ? 'border-cyan-400 glow-cyan' : 'border-slate-800'} rounded-2xl p-4 flex flex-col justify-between transition-all hover:border-cyan-500/50 shadow-lg">
+            
+            <div>
+              <div class="flex items-center justify-between mb-2">
+                <span class="bg-cyan-950 text-cyan-300 border border-cyan-500/40 font-mono-tactical font-bold text-xs px-2.5 py-0.5 rounded">
+                  ${hall.code}
+                </span>
+                <span class="text-[11px] ${hall.available ? 'text-emerald-400 bg-emerald-950/60 border border-emerald-500/30' : 'text-amber-400 bg-amber-950/60 border border-amber-500/30'} px-2 py-0.5 rounded-full font-medium">
+                  ${isBooked ? 'محجوزة لك ✓' : hall.statusText}
+                </span>
+              </div>
+
+              <h4 class="font-bold text-white text-sm mb-1">${hall.official}</h4>
+              <p class="text-xs text-slate-400 mb-2">${hall.buildingName} • ${hall.floorLabel}</p>
+
+              <div class="bg-[#121929] rounded-xl p-2.5 text-xs space-y-1 mb-3">
+                <div class="text-slate-300 font-medium truncate"><i class="fa-solid fa-chalkboard-user text-cyan-400 ml-1.5"></i>${hall.speaker}</div>
+                <div class="text-[11px] text-slate-400 truncate"><i class="fa-solid fa-bookmark text-slate-500 ml-1.5"></i>${hall.topic}</div>
+                <div class="flex items-center justify-between text-[10px] text-slate-500 pt-1 border-t border-slate-800">
+                  <span>السعة: ${hall.capacity}</span>
+                  <span class="font-mono-tactical text-emerald-400">BEACON: ${hall.beacon}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Actions Row -->
+            <div class="flex items-center gap-2 pt-2 border-t border-slate-800">
+              <button onclick="bookHall('${hall.code}')" class="flex-1 ${isBooked ? 'bg-emerald-950 text-emerald-300 border border-emerald-500' : 'bg-[#141C30] hover:bg-[#1C2742] text-slate-300 border border-slate-700'} py-2 rounded-xl text-xs font-semibold transition-all">
+                ${isBooked ? 'إلغاء الحجز' : 'حجز القاعة'}
+              </button>
+
+              <button onclick="speakArabicText('${hall.official}، القاعة رقم ${hall.raw} في ${hall.buildingName}')" class="bg-[#141C30] hover:bg-cyan-950 text-slate-400 hover:text-cyan-400 w-9 h-9 rounded-xl flex items-center justify-center text-sm transition-all" title="استماع">
+                <i class="fa-solid fa-volume-high"></i>
+              </button>
+
+              <button onclick="launchAerialDropForHall('${hall.code}')" class="bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-3 py-2 rounded-xl text-xs glow-cyan transition-all flex items-center gap-1">
+                <span>هبوط وملاحة</span>
+                <i class="fa-solid fa-arrow-left text-[10px]"></i>
+              </button>
+            </div>
+
+          </div>
+        `;
+      }).join('');
+    }
+
+    function setDirCategory(cat) {
+      currentDirCategory = cat;
+      document.querySelectorAll('.dir-chip').forEach(c => c.classList.remove('active', 'bg-cyan-500', 'text-slate-950', 'font-bold'));
+      event.target.classList.add('active', 'bg-cyan-500', 'text-slate-950', 'font-bold');
+      renderHallsDirectory();
+      playTacticalBeep(700, 'sine', 0.04);
+    }
+
+    function filterHalls() {
+      renderHallsDirectory();
+    }
+
+    function bookHall(code) {
+      if (bookedHallCodes.has(code)) {
+        bookedHallCodes.delete(code);
+        updateBanner(`تم إلغاء حجز القاعة ${code}.`);
+      } else {
+        bookedHallCodes.add(code);
+        updateBanner(`تم تأكيد حجزك للقاعة ${code} بنجاح. شارة الحجز نشطة.`);
+        playTacticalBeep(1000, 'sine', 0.1);
+      }
+      renderHallsDirectory();
+    }
+
+    /* ==============================================================
+       CINEMATIC AERIAL DROP MODAL SIMULATION
+       ============================================================== */
+    function launchAerialDropForCurrentBuilding() {
+      // Find default hall in current building
+      const hall = CAMPUS_HALLS.find(h => h.buildingId === currentBuilding.id) || CAMPUS_HALLS[0];
+      launchAerialDropForHall(hall.code);
+    }
+
+    function launchAerialDropForHall(code) {
+      activeHall = CAMPUS_HALLS.find(h => h.code === code) || CAMPUS_HALLS[0];
+      currentBuilding = CAMPUS_BUILDINGS.find(b => b.id === activeHall.buildingId) || CAMPUS_BUILDINGS[0];
+
+      // Update walkthrough UI with target hall
+      document.getElementById('walkHallCodeBadge').textContent = activeHall.code;
+      document.getElementById('walkHallTitle').textContent = activeHall.official;
+      document.getElementById('walkFloorBadge').textContent = activeHall.floorLabel;
+      document.getElementById('walkBuildingName').textContent = activeHall.buildingName;
+      currentStepIndex = 0;
+      corridorProgress = 0;
+      updateWalkStepUI();
+
+      // Setup Aerial Modal
+      document.getElementById('aerialTargetTitle').textContent = `${activeHall.official} (${activeHall.code})`;
+      document.getElementById('aerialTargetBuilding').textContent = `${activeHall.buildingName} (${activeHall.floorLabel})`;
+      document.getElementById('aerialDropModal').classList.remove('hidden');
+
+      aerialAltitude = 280;
+      playTacticalBeep(600, 'sawtooth', 0.12);
+
+      clearInterval(aerialIntervalId);
+      aerialIntervalId = setInterval(() => {
+        aerialAltitude -= 22;
+        if (aerialAltitude <= 12) {
+          aerialAltitude = 12;
+          document.getElementById('aerialAltitudeNum').textContent = aerialAltitude;
+          clearInterval(aerialIntervalId);
+          setTimeout(() => {
+            skipAerialDrop();
+          }, 400);
+        } else {
+          document.getElementById('aerialAltitudeNum').textContent = aerialAltitude;
+          playTacticalBeep(700 + (280 - aerialAltitude) * 2, 'sine', 0.03);
+        }
+      }, 90);
+    }
+
+    function skipAerialDrop() {
+      clearInterval(aerialIntervalId);
+      document.getElementById('aerialDropModal').classList.add('hidden');
+      switchTab('screen-walkthrough', document.querySelectorAll('.nav-tab')[2]);
+      updateBanner(`وصلت إلى موقع الهدف: ${activeHall.official}. اتبع مسار الملاحة الداخلي.`);
+      speakCurrentStepAudio();
+      playTacticalBeep(1100, 'sine', 0.12);
+    }
+
+    /* ==============================================================
+       SCREEN 4: AI TACTICAL ASSISTANT
+       ============================================================== */
+    let currentAiMode = 'FAST_SEARCH';
+
+    function setAiMode(mode) {
+      currentAiMode = mode;
+      document.querySelectorAll('.ai-mode-tab').forEach(t => t.classList.remove('active', 'bg-cyan-500/20', 'border-cyan-500/40', 'text-cyan-300'));
+      event.currentTarget.classList.add('active', 'bg-cyan-500/20', 'border-cyan-500/40', 'text-cyan-300');
+      playTacticalBeep(750, 'sine', 0.04);
+    }
+
+    function handleAiInputKey(e) {
+      if (e.key === 'Enter') {
+        sendUserAiMessage();
+      }
+    }
+
+    function sendQuickPrompt(prompt) {
+      document.getElementById('aiUserInput').value = prompt;
+      sendUserAiMessage();
+    }
+
+    function simulateVoiceInput() {
+      playTacticalBeep(900, 'sine', 0.08);
+      document.getElementById('aiUserInput').value = "أين تقع قاعة المؤتمرات 402؟";
+      setTimeout(sendUserAiMessage, 300);
+    }
+
+    function sendUserAiMessage() {
+      const input = document.getElementById('aiUserInput');
+      const text = input.value.trim();
+      if (!text) return;
+
+      appendChatMessage(text, true);
+      input.value = '';
+      playTacticalBeep(850, 'sine', 0.05);
+
+      // Assistant Thinking Simulation
+      setTimeout(() => {
+        let reply = "";
+        let targetCode = null;
+
+        if (text.includes('402') || text.includes('صالح الفهد') || text.includes('مؤتمرات')) {
+          reply = "قاعة الشيخ صالح الفهد للمؤتمرات (#402) تقع في مبنى 1، الدور الرابع. تتسع لـ 250 شخصاً ومزودة بمصعد بانورامي. يمكنك النقر على زر 'هبوط وملاحة' للبدء فوراً.";
+          targetCode = "#402";
+        } else if (text.includes('315') || text.includes('سيبراني') || text.includes('حاسب')) {
+          reply = "معمل الأمن السيبراني والتحقيق الجنائي الرقمي (#315) يقع في مبنى 2، الدور الثالث. المعمل متاح الآن ويضم 45 محطة حوسبة متقدمة.";
+          targetCode = "#315";
+        } else if (text.includes('كراسي') || text.includes('معاقين') || text.includes('احتياجات')) {
+          reply = "جميع مباني الحرم الجامعي الـ 12 مزودة بمسارات كراسي متحركة خالية من العوائق، ومصاعد كهربائية ناطقة، ومنحدرات مطابقة لكود البناء السعودي. تم تفعيل مسار الكراسي المتحركة المضاء بالأخضر في الخريطة.";
+        } else {
+          reply = `بناءً على قاعدة بيانات الحرم الجامعي: يمكنك الوصول إلى وجهتك بسهولة عبر البوابات الرئيسية. النظام يوفر دقة تموضع تصل إلى ±0.35م عبر مستشعرات UWB. هل تود أن أحدد لك أقرب مسار؟`;
+        }
+
+        appendChatMessage(reply, false, targetCode);
+        speakArabicText(reply);
+        playTacticalBeep(1050, 'sine', 0.08);
+      }, 500);
+    }
+
+    function appendChatMessage(text, isUser, targetCode = null) {
+      const chat = document.getElementById('chatHistory');
+      const div = document.createElement('div');
+      div.className = `flex items-start gap-3 p-3.5 rounded-2xl max-w-[85%] ${
+        isUser
+          ? 'bg-cyan-950/70 border border-cyan-500/40 text-cyan-100 self-end'
+          : 'bg-[#10172B] border border-slate-700 text-slate-300 self-start'
+      }`;
+
+      div.innerHTML = `
+        <div class="w-8 h-8 rounded-lg ${isUser ? 'bg-cyan-500 text-slate-950' : 'bg-cyan-500/20 text-cyan-400 border border-cyan-500/30'} flex items-center justify-center text-xs shrink-0 font-bold">
+          <i class="fa-solid ${isUser ? 'fa-user' : 'fa-robot'}"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-2 mb-1">
+            <span class="font-bold text-white text-xs">${isUser ? 'أنت' : 'المساعد التكتيكي (Gemini 3.8 Flash)'}</span>
+          </div>
+          <p class="text-xs leading-relaxed">${text}</p>
+          ${targetCode ? `
+            <button onclick="launchAerialDropForHall('${targetCode}')" class="mt-2.5 bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold px-3 py-1.5 rounded-lg text-xs glow-cyan transition-all flex items-center gap-1.5">
+              <i class="fa-solid fa-location-arrow text-[10px]"></i>
+              <span>بدء الملاحة إلى ${targetCode}</span>
+            </button>
+          ` : ''}
+        </div>
+      `;
+
+      chat.appendChild(div);
+      chat.scrollTop = chat.scrollHeight;
+    }
+
+    /* ==============================================================
+       MODALS & UTILITIES
+       ============================================================== */
+    function toggleRadarModal() {
+      const modal = document.getElementById('radarModal');
+      modal.classList.toggle('hidden');
+      playTacticalBeep(800, 'sine', 0.06);
+    }
+
+    function simulateRadarLock() {
+      playTacticalBeep(1150, 'sawtooth', 0.1);
+      updateBanner("تم قفل الرادار التكتيكي على الهدف بنجاح: دقة UWB ±0.35m");
+      toggleRadarModal();
+    }
+
+    function toggleVoiceMute() {
+      isVoiceMuted = !isVoiceMuted;
+      const btn = document.getElementById('muteBtn');
+      if (isVoiceMuted) {
+        btn.innerHTML = '<i class="fa-solid fa-volume-xmark text-red-400"></i>';
+        window.speechSynthesis?.cancel();
+      } else {
+        btn.innerHTML = '<i class="fa-solid fa-volume-high text-cyan-300"></i>';
+        playTacticalBeep(900, 'sine', 0.05);
+      }
+    }
+
+    function updateBanner(msg) {
+      document.getElementById('bannerMessage').textContent = msg;
+      document.getElementById('statusBanner').classList.remove('hidden');
+    }
+
+    function dismissBanner() {
+      document.getElementById('statusBanner').classList.add('hidden');
+    }
+
+    function switchTab(screenId, btn) {
+      document.querySelectorAll('.screen-view').forEach(s => s.classList.add('hidden'));
+      document.getElementById(screenId).classList.remove('hidden');
+
+      document.querySelectorAll('.nav-tab').forEach(t => {
+        t.classList.remove('active', 'text-cyan-400');
+        t.classList.add('text-slate-400');
+      });
+      btn.classList.add('active', 'text-cyan-400');
+      btn.classList.remove('text-slate-400');
+
+      playTacticalBeep(650, 'sine', 0.04);
+
+      if (screenId === 'screen-campus3d') {
+        setTimeout(resizeCampusCanvas, 30);
+      } else if (screenId === 'screen-walkthrough') {
+        setTimeout(resizeCorridorCanvas, 30);
+      } else if (screenId === 'screen-directory') {
+        renderHallsDirectory();
+      }
+    }
+
+    /* INITIALIZATION ON LOAD */
+    window.addEventListener('DOMContentLoaded', () => {
+      resizeCampusCanvas();
+      resizeCorridorCanvas();
+      renderHallsDirectory();
+      updateWalkStepUI();
+      updateCompassHeading();
+    });
+  </script>
+</body>
+</html>

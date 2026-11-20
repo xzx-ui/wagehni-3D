@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="400dp"
+    android:height="180dp"
+    android:viewportWidth="400"
+    android:viewportHeight="180">
+    <path android:pathData="M0,0h400v180h-400z">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:startX="0"
+                android:startY="0"
+                android:endX="400"
+                android:endY="180"
+                android:type="linear">
+                <item android:offset="0.0" android:color="#060B14" />
+                <item android:offset="0.5" android:color="#0B192E" />
+                <item android:offset="1.0" android:color="#081324" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <!-- Tactical Perspective Grid Lines -->
+    <path
+        android:strokeColor="#1A00F5D4"
+        android:strokeWidth="1"
+        android:pathData="M0,140 L400,140 M0,160 L400,160 M0,120 L400,120 M200,80 L40,180 M200,80 L120,180 M200,80 L200,180 M200,80 L280,180 M200,80 L360,180" />
+    <!-- Isometric Hologram Buildings -->
+    <path
+        android:fillColor="#2600F5D4"
+        android:strokeColor="#00F5D4"
+        android:strokeWidth="1.5"
+        android:pathData="M70,130 L100,115 L130,130 L130,70 L100,55 L70,70 Z" />
+    <path
+        android:fillColor="#2600E676"
+        android:strokeColor="#00E676"
+        android:strokeWidth="1.5"
+        android:pathData="M165,135 L205,115 L245,135 L245,50 L205,30 L165,50 Z" />
+    <path
+        android:fillColor="#26FFD166"
+        android:strokeColor="#FFD166"
+        android:strokeWidth="1.5"
+        android:pathData="M275,130 L310,112 L345,130 L345,75 L310,57 L275,75 Z" />
+    <!-- Radar Target Rings -->
+    <path
+        android:strokeColor="#6600F5D4"
+        android:strokeWidth="1.2"
+        android:pathData="M205,82 m-42,0 a42,42 0 1,0 84,0 a42,42 0 1,0 -84,0" />
+    <path
+        android:strokeColor="#9900E676"
+        android:strokeWidth="1.5"
+        android:pathData="M205,82 m-24,0 a24,24 0 1,0 48,0 a24,24 0 1,0 -48,0" />
+</vector>
